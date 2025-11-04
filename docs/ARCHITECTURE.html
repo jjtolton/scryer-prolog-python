@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scryer-Prolog-Python: Architecture & Design</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #fbbf24 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.5em;
+            opacity: 0.9;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: #fbbf24;
+            color: #1e3a8a;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        nav {
+            background: #f8f9fa;
+            border-bottom: 3px solid #3b82f6;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #1e3a8a;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        nav a:hover {
+            background: #3b82f6;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        main {
+            padding: 40px;
+        }
+
+        section {
+            margin-bottom: 60px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #3b82f6;
+        }
+
+        h2 {
+            color: #1e3a8a;
+            font-size: 2.5em;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        h3 {
+            color: #3b82f6;
+            font-size: 1.8em;
+            margin: 25px 0 15px 0;
+        }
+
+        h4 {
+            color: #1e3a8a;
+            font-size: 1.4em;
+            margin: 20px 0 10px 0;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 25px 0;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+            margin: 30px 0;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 10px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 25px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #3b82f6;
+            border: 4px solid white;
+            box-shadow: 0 0 0 2px #3b82f6;
+        }
+
+        .phase {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 4px solid #3b82f6;
+            margin-bottom: 20px;
+        }
+
+        .phase h4 {
+            color: #3b82f6;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: #3b82f6;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        .badge-critical {
+            background: #dc2626;
+            color: white;
+        }
+
+        .badge-high {
+            background: #ea580c;
+            color: white;
+        }
+
+        .badge-medium {
+            background: #fbbf24;
+            color: #1e3a8a;
+        }
+
+        .badge-complete {
+            background: #10b981;
+            color: white;
+        }
+
+        .badge-pending {
+            background: #6b7280;
+            color: white;
+        }
+
+        .highlight {
+            background: #fef3c7;
+            padding: 3px 6px;
+            border-radius: 3px;
+        }
+
+        .architecture-diagram {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            font-family: 'Consolas', 'Monaco', monospace;
+            margin: 20px 0;
+        }
+
+        .architecture-diagram pre {
+            text-align: left;
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        footer {
+            background: #1e3a8a;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .challenge-box {
+            background: #fef2f2;
+            border-left: 4px solid #dc2626;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .success-box {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+
+            nav ul {
+                flex-direction: column;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐍 Scryer-Prolog-Python 🔮</h1>
+            <p class="subtitle">Architecture & Design</p>
+            <span class="version-badge">Version 0.2.0 (Pre-release / Alpha)</span>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#multi-interpreter">Multi-Interpreter ⭐</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#components">Components</a></li>
+                <li><a href="#challenges">Challenges</a></li>
+                <li><a href="#roadmap">Roadmap</a></li>
+                <li><a href="#technical">Technical Decisions</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <section id="overview">
+                <h2>📖 What Is This Repository?</h2>
+
+                <div class="card">
+                    <p><code>scryer-prolog-python</code> is a <strong>pure Prolog library</strong> that provides seamless Python integration for Scryer Prolog using FFI (Foreign Function Interface).</p>
+                </div>
+
+                <h3>Key Features</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Execute Python Code</h4>
+                        <p>Run arbitrary Python code from Prolog</p>
+                    </div>
+                    <div class="card">
+                        <h4>Bidirectional Data Exchange</h4>
+                        <p>Convert between Prolog and Python types seamlessly</p>
+                    </div>
+                    <div class="card">
+                        <h4>Explicit Lifecycle</h4>
+                        <p>Full control over Python interpreter init/finalize</p>
+                    </div>
+                </div>
+
+                <h3>What Is a "Crate" in Scryer Prolog?</h3>
+                <div class="info-box">
+                    <p>In the Scryer Prolog ecosystem, a <strong>"crate"</strong> or <strong>"library"</strong> refers to:</p>
+                    <ul>
+                        <li><strong>A Prolog Module</strong> - Defined with <code>:- module(name, [exports]).</code></li>
+                        <li><strong>Pure Prolog vs. FFI Libraries</strong> - Can be written entirely in Prolog or use FFI to call C libraries</li>
+                        <li><strong>System vs. User Libraries</strong> - System libraries live in Scryer's <code>src/lib/</code>, user libraries can live anywhere</li>
+                    </ul>
+                    <p><strong>Our Status:</strong> We are a standalone FFI-based library that could eventually be merged into Scryer's core distribution.</p>
+                </div>
+
+                <h3>Inspiration</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>libpython-clj</h4>
+                        <p>Python integration for Clojure - provides the functional approach to Python interop that we adapt for Prolog</p>
+                    </div>
+                    <div class="card">
+                        <h4>libscryer-clj</h4>
+                        <p>Scryer Prolog integration for Clojure - provides the machine-based lifecycle pattern we follow</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="multi-interpreter">
+                <h2>🔮 Multiple Interpreter Support: A Key Differentiator</h2>
+
+                <div class="success-box">
+                    <h3>⭐ Major Opportunity: True Parallel Python Execution</h3>
+                    <p>Python 3.12+ supports <strong>per-interpreter GIL</strong> via PEP 684, enabling TRUE parallel execution across CPU cores!</p>
+                </div>
+
+                <h3>Python's Sub-Interpreter Capabilities</h3>
+                <div class="card">
+                    <p>Python has supported <strong>multiple interpreters in the same process</strong> since version 1.5 (1997) via the C API:</p>
+                    <ul>
+                        <li><strong>Main Interpreter:</strong> Created via <code>Py_Initialize()</code> (once per process)</li>
+                        <li><strong>Sub-Interpreters:</strong> Created via <code>Py_NewInterpreter()</code> (returns <code>PyThreadState*</code>)</li>
+                        <li><strong>Cleanup:</strong> <code>Py_EndInterpreter(tstate)</code> terminates a sub-interpreter</li>
+                    </ul>
+
+                    <h4>Each sub-interpreter provides:</h4>
+                    <ul>
+                        <li>Independent <code>sys.modules</code> and <code>sys.path</code></li>
+                        <li>Separate global namespaces</li>
+                        <li>Isolated execution environments</li>
+                    </ul>
+                </div>
+
+                <h3>The PEP 684 Breakthrough (Python 3.12+)</h3>
+                <div class="grid">
+                    <div class="card" style="background: #fef2f2; border-left: 4px solid #dc2626;">
+                        <h4>❌ Before Python 3.12</h4>
+                        <ul>
+                            <li>All sub-interpreters shared ONE global GIL</li>
+                            <li>No true parallelism possible</li>
+                            <li>Limited usefulness</li>
+                        </ul>
+                    </div>
+                    <div class="card" style="background: #f0fdf4; border-left: 4px solid #10b981;">
+                        <h4>✅ After Python 3.12</h4>
+                        <ul>
+                            <li>Each sub-interpreter can have its <strong>own GIL</strong></li>
+                            <li>Configured via <code>PyInterpreterConfig.gil</code></li>
+                            <li><strong>TRUE PARALLEL EXECUTION</strong> across CPU cores!</li>
+                            <li>Different interpreters run simultaneously</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Why This Matters for Us</h3>
+                <div class="info-box">
+                    <p>Unlike libpython-clj (which uses a single interpreter for simplicity), we could provide:</p>
+                    <ol>
+                        <li><strong>True Machine-Based API</strong> (matching libscryer-clj's design philosophy)</li>
+                        <li><strong>Parallel Python Execution</strong> (Python 3.12+)</li>
+                        <li><strong>Isolated Contexts</strong> (natural fit for Prolog's multi-context reasoning)</li>
+                    </ol>
+                </div>
+
+                <h3>Potential API Design</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>Single Interpreter Mode (Current)</h4>
+                        <pre><code>% v0.1.x - v0.3.x
+py_initialize.
+py_run_simple_string('x = 10').
+py_finalize.</code></pre>
+                    </div>
+                    <div class="card" style="background: #f0fdf4;">
+                        <h4>Multiple Interpreter Mode (Future)</h4>
+                        <pre><code>% v0.4.0+
+py_initialize.
+py_new_interpreter(I1).
+py_new_interpreter(I2).
+
+% Run in specific interpreters
+py_run(I1, 'import numpy').
+py_run(I2, 'import pandas').
+
+% TRUE PARALLELISM (Python 3.12+)
+concurrent([
+    py_run(I1, 'heavy_computation_1()'),
+    py_run(I2, 'heavy_computation_2()')
+]).  % Runs on different CPU cores!
+
+py_end_interpreter(I1).
+py_end_interpreter(I2).
+py_finalize.</code></pre>
+                    </div>
+                </div>
+
+                <h3>Trade-offs</h3>
+                <div class="grid">
+                    <div class="card" style="background: #f0fdf4;">
+                        <h4>✅ Advantages</h4>
+                        <ul>
+                            <li><strong>True parallelism</strong> on Python 3.12+</li>
+                            <li><strong>Isolated environments</strong></li>
+                            <li><strong>Matches "machine" metaphor</strong></li>
+                            <li><strong>Natural for Prolog</strong></li>
+                            <li><strong>Major differentiator</strong> from libpython-clj</li>
+                        </ul>
+                    </div>
+                    <div class="card" style="background: #fef2f2;">
+                        <h4>❌ Challenges</h4>
+                        <ul>
+                            <li><strong>Extension module compatibility</strong> - Must use multi-phase init</li>
+                            <li><strong>Increased complexity</strong> - More state to manage</li>
+                            <li><strong>Python 3.12+ requirement</strong> - For per-interpreter GIL</li>
+                            <li><strong>Testing complexity</strong> - Isolation verification</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Implementation Strategy</h3>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h4>v0.1.x - v0.3.x: Single Interpreter</h4>
+                        <ul>
+                            <li>Simpler implementation</li>
+                            <li>Works with all Python versions</li>
+                            <li>Establishes stable foundation</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-item" style="background: #fef3c7;">
+                        <h4>v0.4.0: Add Sub-Interpreter Support</h4>
+                        <ul>
+                            <li><code>py_new_interpreter/1</code>, <code>py_end_interpreter/1</code></li>
+                            <li><code>py_run/2</code> for interpreter-specific execution</li>
+                            <li>Python 3.12+ detection and warnings</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-item">
+                        <h4>v0.5.0+: Optimize Multi-Interpreter</h4>
+                        <ul>
+                            <li>Automatic interpreter pooling</li>
+                            <li>Load balancing</li>
+                            <li>Integration with Scryer threading</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="success-box">
+                    <h3>Decision: Keep the Door Open</h3>
+                    <p><strong>Current Decision (v0.2.0):</strong></p>
+                    <ul>
+                        <li>Implement single-interpreter API first</li>
+                        <li>Design with extensibility in mind</li>
+                        <li>Document multi-interpreter as a future possibility</li>
+                    </ul>
+                    <p><strong>Rationale:</strong> Get basic functionality solid first, learn from real-world usage, avoid premature complexity</p>
+                    <p><strong>But:</strong> The architecture should not preclude adding multi-interpreter support later. We keep the API clean so adding interpreter IDs is a backward-compatible extension.</p>
+                </div>
+            </section>
+
+            <section id="architecture">
+                <h2>🏗️ Current Architecture</h2>
+
+                <h3>Directory Structure</h3>
+                <pre><code>scryer-prolog-python/
+├── src/
+│   └── lib/
+│       └── python.pl          # Main library module (450+ lines)
+├── examples/
+│   ├── python_demo.pl         # v0.1.0 basic examples
+│   └── python_demo_v2.pl      # v0.2.0 advanced examples
+├── tests/
+│   ├── test_all_types.pl      # Type conversion tests
+│   ├── test_dict_to_list.pl   # Dictionary tests
+│   └── test_globals_locals.pl # Namespace tests
+├── docs/
+│   ├── DESIGN_GLOBALS_LOCALS.md
+│   ├── DESIGN_STATE_MANAGEMENT.md
+│   └── ARCHITECTURE.md        # This document
+├── VERSION                    # Semantic version number
+├── PACKAGE.md                 # Version history & roadmap
+└── README.md                  # User documentation</code></pre>
+
+                <h3>FFI Layer Architecture</h3>
+                <div class="architecture-diagram">
+                    <pre>┌─────────────────┐
+│  Prolog Code    │
+│  (user.pl)      │
+└────────┬────────┘
+         │ :- use_module(library(python))
+         │
+┌────────▼────────┐
+│  python.pl      │  ← Our Library
+│  Module Layer   │
+└────────┬────────┘
+         │ ffi:'PyDict_New'(...)
+         │
+┌────────▼────────┐
+│  Scryer FFI     │  ← Built into Scryer
+│  (library(ffi)) │
+└────────┬────────┘
+         │ use_foreign_module(...)
+         │
+┌────────▼────────┐
+│ libpython3.10.so│  ← System Python
+│  Python C API   │
+└─────────────────┘</pre>
+                </div>
+
+                <div class="success-box">
+                    <strong>No C wrapper code needed!</strong> We call Python C API functions directly via FFI.
+                </div>
+
+                <h3>Module Organization</h3>
+                <div class="card">
+                    <pre><code>:- module(python, [
+    % Lifecycle
+    py_initialize/0,
+    py_finalize/0,
+
+    % Code Execution
+    py_run_simple_string/1,      % Basic execution
+    py_run_simple_string/5,      % With globals/locals
+
+    % Dictionary Operations
+    py_dict_new/1,
+    py_dict_set/3,
+    py_dict_get/3,
+    py_dict_to_list/2,
+    prolog_to_py_dict/2,
+    py_dict_to_prolog/2,
+
+    % Memory Management (v0.2.0)
+    py_incref/1,                 % Increment reference count
+    py_decref/1,                 % Decrement reference count
+    py_xdecref/1,                % Safe decrement (handles NULL)
+    with_new_pyobject/3          % Automatic cleanup wrapper
+]).</code></pre>
+                </div>
+
+                <h3>Internal Structure (src/lib/python.pl)</h3>
+                <ol>
+                    <li>State Management Abstraction (lines 73-92)</li>
+                    <li>Reference Counting Abstraction (lines 94-156)</li>
+                    <li>FFI Bindings (lines 226-273)</li>
+                    <li>Dictionary Operations (lines 275-330)</li>
+                    <li>Type Conversion (lines 332-390)</li>
+                    <li>Extended Execution (lines 392-450)</li>
+                </ol>
+            </section>
+
+            <section id="components">
+                <h2>🔧 Key Components</h2>
+
+                <div class="phase">
+                    <h3>1. State Management (v0.2.0)</h3>
+                    <p><strong>Problem:</strong> Need to track Python interpreter state (initialized/finalized) and library load status.</p>
+                    <p><strong>Solution:</strong> Blackboard abstraction over <code>library(iso_ext)</code></p>
+                    <pre><code>% Abstraction layer
+python_state_set(Key, Value) :- bb_put(Key, Value).
+python_state_check(Key) :- bb_get(Key, true).
+
+% Public API
+is_python_initialized :- python_state_check(python_initialized).
+mark_python_initialized :- python_state_set(python_initialized, true).</code></pre>
+                    <p><strong>Benefits:</strong> Cleaner than dynamic/assert/retract, thread-safe, easy to swap implementation</p>
+                </div>
+
+                <div class="phase">
+                    <h3>2. Reference Counting & Memory Management (v0.2.0) <span class="badge badge-complete">✅ FIXED</span></h3>
+                    <p><strong>Problem:</strong> Python uses reference counting for garbage collection. We must track object lifetimes to prevent memory leaks.</p>
+                    <p><strong>Solution:</strong> Abstraction over Py_IncRef/Py_DecRef with automatic cleanup via <code>setup_call_cleanup</code></p>
+                    <pre><code>% Public API (exported from module)
+py_incref(+PyObject)   % Increment reference count
+py_decref(+PyObject)   % Decrement reference count
+py_xdecref(+PyObject)  % Safe decrement (handles NULL/0)
+
+% Automatic cleanup helper
+with_new_pyobject(:Create, -Obj, :Use) :-
+    call(Create, Obj),
+    setup_call_cleanup(true, call(Use, Obj), py_xdecref(Obj)).</code></pre>
+
+                    <h4>Reference Types</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Examples</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>NEW</strong></td>
+                                <td>PyDict_New, PyLong_FromLong, PyFloat_FromDouble, PyUnicode_FromString, PyDict_Keys, PyRun_String</td>
+                                <td>Must decref when done</td>
+                            </tr>
+                            <tr>
+                                <td><strong>BORROWED</strong></td>
+                                <td>PyDict_GetItemString, PyList_GetItem, PyModule_GetDict</td>
+                                <td>Must NOT decref</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Memory Leak Prevention</h4>
+                    <div class="success-box">
+                        All predicates that create Python objects use <code>setup_call_cleanup</code> to ensure proper cleanup, even on errors.
+                    </div>
+                    <pre><code>% Example: py_dict_set/3 - Fixed in v0.2.0
+py_dict_set(DictPtr, Key, Value) :-
+    prolog_value_to_pyobject(Value, PyValue),  % NEW ref
+    setup_call_cleanup(
+        true,
+        ffi:'PyDict_SetItemString'(DictPtr, Key, PyValue, Result),
+        py_xdecref(PyValue)  % Always cleanup, even on error
+    ).
+
+% Example: py_dict_to_list/2 - Fixed in v0.2.0
+py_dict_to_list(DictPtr, List) :-
+    ffi:'PyDict_Keys'(DictPtr, KeysObj),  % NEW ref
+    setup_call_cleanup(
+        ffi:'PyList_Size'(KeysObj, Size),
+        dict_keys_to_list(DictPtr, KeysObj, 0, Size, List),
+        py_xdecref(KeysObj)  % Cleanup
+    ).</code></pre>
+
+                    <h4>Stress Testing Results</h4>
+                    <ul>
+                        <li>✅ 1000 dict creation/destruction cycles - No crashes</li>
+                        <li>✅ 1000 prolog_to_py_dict conversions - No crashes</li>
+                        <li>✅ 100 py_run_simple_string/5 executions - No crashes</li>
+                        <li>✅ Nested operations with multiple sets/gets - Pass</li>
+                    </ul>
+                </div>
+
+                <div class="phase">
+                    <h3>3. Type Conversion System</h3>
+                    <p><strong>Current Support:</strong></p>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Prolog Type</th>
+                                <th>Python Type</th>
+                                <th>Direction</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Atom</td><td>str</td><td>Both</td></tr>
+                            <tr><td>Integer</td><td>int</td><td>Both</td></tr>
+                            <tr><td>Float</td><td>float</td><td>Both</td></tr>
+                            <tr><td>true/false</td><td>True/False</td><td>From Python</td></tr>
+                        </tbody>
+                    </table>
+
+                    <p><strong>Implementation:</strong> Try-convert approach with error checking</p>
+                    <pre><code>pyobject_to_prolog_value(PyObject, Value) :-
+    % Try string, then int, then float, then bool
+    ffi:'PyUnicode_AsUTF8'(PyObject, StrResult),
+    ffi:'PyErr_Occurred'(Err),
+    (Err = 0 -> atom_chars(Value, StrResult) ; ...).</code></pre>
+                </div>
+
+                <div class="phase">
+                    <h3>4. Dictionary Operations</h3>
+                    <p><strong>Representation:</strong> Python dicts ↔ Prolog key-value lists</p>
+                    <pre><code>% Python: {'name': 'Alice', 'age': 30}
+% Prolog: [name-'Alice', age-30]
+
+% Operations
+py_dict_new(-DictPtr)
+py_dict_set(+DictPtr, +Key, +Value)
+py_dict_get(+DictPtr, +Key, -Value)
+py_dict_to_list(+DictPtr, -List)
+prolog_to_py_dict(+List, -DictPtr)</code></pre>
+                </div>
+
+                <div class="phase">
+                    <h3>5. Code Execution (Two Modes)</h3>
+                    <h4>Simple execution (v0.1.0):</h4>
+                    <pre><code>py_run_simple_string('x = 10')
+% Executes in __main__ namespace
+% State persists between calls</code></pre>
+
+                    <h4>With globals/locals (v0.2.0):</h4>
+                    <pre><code>py_run_simple_string('result = a + b',
+                     [a-5, b-10],      % GlobalsIn
+                     [],               % LocalsIn
+                     Globals,          % GlobalsOut
+                     _Locals).         % LocalsOut
+% Globals = [a-5, b-10, ..., result-15]</code></pre>
+                </div>
+            </section>
+
+            <section id="challenges">
+                <h2>⚠️ Current Challenges</h2>
+
+                <div class="success-box" style="background: #d1fae5; border-left: 4px solid #10b981;">
+                    <h3><span class="badge badge-complete">✅ RESOLVED</span> 1. Memory Management (v0.2.0)</h3>
+                    <p><strong>Problem:</strong> Python objects created via PyLong_FromLong, etc. return NEW references that must be decreffed to prevent memory leaks.</p>
+                    <p><strong>Status:</strong></p>
+                    <ul>
+                        <li><span class="badge badge-complete">✓</span> Infrastructure in place (py_decref, py_xdecref, with_new_pyobject)</li>
+                        <li><span class="badge badge-complete">✓</span> All predicates audited and fixed (v0.2.0)</li>
+                        <li><span class="badge badge-complete">✓</span> Comprehensive stress testing completed</li>
+                    </ul>
+
+                    <h4>Solution Implemented:</h4>
+                    <pre><code>% py_dict_set/3 - Fixed in v0.2.0
+py_dict_set(Dict, key, Value) :-
+    prolog_value_to_pyobject(Value, PyValue),  % NEW ref
+    setup_call_cleanup(
+        true,
+        ffi:'PyDict_SetItemString'(Dict, key, PyValue, Result),
+        py_xdecref(PyValue)  % Always cleanup, even on error
+    ).
+
+% py_dict_to_list/2 - Fixed in v0.2.0
+py_dict_to_list(DictPtr, List) :-
+    ffi:'PyDict_Keys'(DictPtr, KeysObj),  % NEW ref
+    setup_call_cleanup(
+        ffi:'PyList_Size'(KeysObj, Size),
+        dict_keys_to_list(DictPtr, KeysObj, 0, Size, List),
+        py_xdecref(KeysObj)  % Cleanup
+    ).
+
+% py_run_simple_string/5 - Fixed with ownership tracking
+% Only decrefs NEW references, not BORROWED ones</code></pre>
+
+                    <h4>Verification:</h4>
+                    <ul>
+                        <li>✅ test_memory_management.pl with 1000+ cycles</li>
+                        <li>✅ All existing tests pass</li>
+                        <li>✅ No crashes or segfaults</li>
+                    </ul>
+                </div>
+
+                <div class="grid">
+                    <div class="challenge-box">
+                        <h3><span class="badge badge-high">HIGH</span> 2. Limited Type Support</h3>
+                        <p><strong>Missing:</strong></p>
+                        <ul>
+                            <li>Lists (Python lists/tuples)</li>
+                            <li>Compound terms</li>
+                            <li>Python None representation</li>
+                            <li>Binary data</li>
+                            <li>Custom classes</li>
+                        </ul>
+                    </div>
+
+                    <div class="challenge-box">
+                        <h3><span class="badge badge-high">HIGH</span> 3. No Scoped Resource Management</h3>
+                        <p>Need equivalent of libpython-clj's <code>stack-resource-context</code></p>
+                        <p><strong>Needed:</strong></p>
+                        <pre><code>with_py_scope(Goal) :-
+    % Track all Python objects
+    % created during Goal
+    % Auto-decref on exit</code></pre>
+                    </div>
+
+                    <div class="challenge-box">
+                        <h3><span class="badge badge-medium">MEDIUM</span> 4. No Module/Import System</h3>
+                        <p><strong>Current:</strong> Can only execute code strings</p>
+                        <p><strong>Needed:</strong></p>
+                        <pre><code>py_import(numpy, NP),
+py_call(NP, array, [[1,2,3]], Result).</code></pre>
+                    </div>
+
+                    <div class="challenge-box">
+                        <h3><span class="badge badge-medium">MEDIUM</span> 5. Error Handling Coverage</h3>
+                        <p><strong>Missing:</strong></p>
+                        <ul>
+                            <li>Detailed Python exception messages</li>
+                            <li>Python tracebacks</li>
+                            <li>Mapping exceptions to Prolog errors</li>
+                        </ul>
+                    </div>
+
+                    <div class="challenge-box">
+                        <h3><span class="badge badge-medium">MEDIUM</span> 6. Thread Safety</h3>
+                        <p><strong>Status:</strong> UNKNOWN</p>
+                        <p>Python's GIL (Global Interpreter Lock) - only one thread can execute Python at a time</p>
+                        <p><strong>Questions:</strong></p>
+                        <ul>
+                            <li>Can multiple Prolog threads call Python safely?</li>
+                            <li>Do we need explicit GIL acquire/release?</li>
+                            <li>Interaction with Scryer's threading?</li>
+                        </ul>
+                    </div>
+
+                    <div class="challenge-box">
+                        <h3><span class="badge badge-medium">MEDIUM</span> 7. Testing & CI</h3>
+                        <p><strong>Missing:</strong></p>
+                        <ul>
+                            <li>Automated test suite</li>
+                            <li>Continuous integration</li>
+                            <li>Property-based testing</li>
+                            <li>Memory leak tests</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="roadmap">
+                <h2>🗺️ Roadmap to Parity with libpython-clj</h2>
+
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <h3>Phase 1: Stability & Memory Safety (v0.2.x - v0.3.0)</h3>
+                        <p><strong>Goal:</strong> Make it production-ready for basic use cases</p>
+                        <ul>
+                            <li><span class="badge badge-critical">CRITICAL</span> Fix all memory leaks</li>
+                            <li>Scoped resource management</li>
+                            <li>Better error handling</li>
+                            <li>Testing infrastructure</li>
+                        </ul>
+                        <p><strong>Deliverable:</strong> v0.3.0 - "Stable for basic use cases"</p>
+                    </div>
+
+                    <div class="timeline-item" style="background: #fef3c7;">
+                        <h3>Phase 2: Type System Expansion & Multi-Interpreter Support (v0.4.0 - v0.5.0)</h3>
+                        <p><strong>Goal:</strong> Support rich data interchange AND enable parallel Python execution</p>
+                        <h4><span class="badge badge-complete">⭐ NEW</span> Multi-Interpreter Support (v0.4.0)</h4>
+                        <ul>
+                            <li><code>py_new_interpreter/1</code> - Create sub-interpreters</li>
+                            <li><code>py_end_interpreter/1</code> - Cleanup sub-interpreters</li>
+                            <li><code>py_run/2</code> - Execute in specific interpreter</li>
+                            <li>Python 3.12+ detection for per-interpreter GIL</li>
+                            <li>Documentation on extension module compatibility</li>
+                            <li>Test isolation between interpreters</li>
+                        </ul>
+                        <h4>Type System Enhancements</h4>
+                        <ul>
+                            <li>List/Tuple support</li>
+                            <li>None and null handling</li>
+                            <li>Binary data</li>
+                            <li>Compound terms</li>
+                        </ul>
+                        <p><strong>Deliverable:</strong> v0.4.0 - "Rich type support + Multi-interpreter foundation"</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h3>Phase 3: Module & Call System (v0.6.0 - v0.7.0)</h3>
+                        <p><strong>Goal:</strong> Call Python functions and methods naturally</p>
+                        <ul>
+                            <li>Import system</li>
+                            <li>Function calls</li>
+                            <li>Attribute access</li>
+                            <li>Method calls</li>
+                        </ul>
+                        <p><strong>Deliverable:</strong> v0.6.0 - "Function call support"</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h3>Phase 4: Advanced Features (v0.8.0+)</h3>
+                        <p><strong>Goal:</strong> Match libpython-clj's advanced capabilities</p>
+                        <ul>
+                            <li>Generators and iterators</li>
+                            <li>Context managers</li>
+                            <li>Callbacks (Prolog → Python)</li>
+                            <li>Class creation</li>
+                            <li>NumPy integration</li>
+                        </ul>
+                        <p><strong>Deliverable:</strong> v0.8.0 - "Advanced integration"</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <h3>Phase 5: Performance & Polish (v0.9.0 → v1.0.0)</h3>
+                        <p><strong>Goal:</strong> Production-grade performance and stability</p>
+                        <ul>
+                            <li>Performance optimization</li>
+                            <li>Comprehensive documentation</li>
+                            <li>Stability hardening</li>
+                            <li>Package distribution</li>
+                        </ul>
+                        <p><strong>Deliverable:</strong> v1.0.0 - "Production ready"</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="technical">
+                <h2>🔬 Technical Decisions</h2>
+
+                <div class="grid">
+                    <div class="card">
+                        <h3>Why FFI Instead of C Extension?</h3>
+                        <p><strong>Pros:</strong></p>
+                        <ul>
+                            <li>✅ Pure Prolog - no C compilation needed</li>
+                            <li>✅ Portable - works wherever libpython exists</li>
+                            <li>✅ Easier to develop/debug</li>
+                            <li>✅ Leverages Scryer's FFI infrastructure</li>
+                        </ul>
+                        <p><strong>Cons:</strong></p>
+                        <ul>
+                            <li>❌ Can't call C macros (only functions)</li>
+                            <li>❌ Slightly slower (but negligible)</li>
+                        </ul>
+                        <p><strong>Decision:</strong> FFI is the right choice for rapid development and maintainability.</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Why Blackboard (bb_put/bb_get)?</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>dynamic</th>
+                                    <th>bb_put/bb_get</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Speed</td><td>Fast</td><td>Fast</td></tr>
+                                <tr><td>Thread safety</td><td>No</td><td>Yes</td></tr>
+                                <tr><td>Cleanup</td><td>Manual</td><td>Automatic</td></tr>
+                                <tr><td>Semantics</td><td>Database</td><td>Global vars</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>Decision:</strong> Blackboard is cleaner for global state that isn't meant to backtrack.</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Why Try-Convert Instead of Type Checking?</h3>
+                        <p><strong>Problem:</strong> Python's type-checking functions (PyLong_Check, etc.) are C macros, not exported functions.</p>
+                        <p><strong>Solutions tried:</strong></p>
+                        <ol>
+                            <li>❌ Get type object pointers - Failed (not callable)</li>
+                            <li>✅ Try-convert approach - Works!</li>
+                            <li>⏳ Future: PyType_IsSubtype with manual lookups</li>
+                        </ol>
+                        <p><strong>Decision:</strong> Try-convert works and is simple. Optimize later if needed.</p>
+                    </div>
+
+                    <div class="card">
+                        <h3>Why Key-Value Lists Instead of library(assoc)?</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>[key-value]</th>
+                                    <th>library(assoc)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Simplicity</td><td>Very simple</td><td>More complex</td></tr>
+                                <tr><td>Performance</td><td>O(n)</td><td>O(log n)</td></tr>
+                                <tr><td>Familiarity</td><td>Common</td><td>Less known</td></tr>
+                                <tr><td>Order</td><td>Preserved</td><td>Tree order</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>Decision:</strong> Lists are simpler and match Python dict behavior. Can add assoc support later.</p>
+                    </div>
+                </div>
+
+                <h3>Design Philosophy</h3>
+                <div class="grid">
+                    <div class="card">
+                        <h4>1. Explicit Over Implicit</h4>
+                        <p>User controls interpreter lifecycle, no hidden state, errors are thrown</p>
+                    </div>
+                    <div class="card">
+                        <h4>2. Prolog-Native Patterns</h4>
+                        <p>Use Prolog lists, unification, backtracking where appropriate</p>
+                    </div>
+                    <div class="card">
+                        <h4>3. Safety Always</h4>
+                        <p>Choose safety over performance where they conflict</p>
+                    </div>
+                    <div class="card">
+                        <h4>4. Incremental Complexity</h4>
+                        <p>Start simple (v0.1.0), add features incrementally</p>
+                    </div>
+                    <div class="card">
+                        <h4>5. Inspired, Not Ported</h4>
+                        <p>Adapt libpython-clj to Prolog idioms, respect Prolog's strengths</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="ffi-bindings">
+                <h2>📋 Appendix: Current FFI Bindings</h2>
+
+                <div class="card">
+                    <p><strong>Total:</strong> 23 Python C API functions currently bound</p>
+                </div>
+
+                <div class="grid">
+                    <div class="card">
+                        <h4>Interpreter Lifecycle</h4>
+                        <pre><code>Py_Initialize
+Py_Finalize</code></pre>
+                    </div>
+
+                    <div class="card">
+                        <h4>Code Execution</h4>
+                        <pre><code>PyRun_SimpleString
+PyRun_String</code></pre>
+                    </div>
+
+                    <div class="card">
+                        <h4>Dictionary Operations</h4>
+                        <pre><code>PyDict_New
+PyDict_SetItemString
+PyDict_GetItemString
+PyDict_Keys
+PyDict_Size</code></pre>
+                    </div>
+
+                    <div class="card">
+                        <h4>Type Conversion</h4>
+                        <pre><code>PyLong_FromLong
+PyLong_AsLong
+PyFloat_FromDouble
+PyFloat_AsDouble
+PyUnicode_FromString
+PyUnicode_AsUTF8
+PyObject_Type
+PyObject_IsTrue</code></pre>
+                    </div>
+
+                    <div class="card">
+                        <h4>Error Handling</h4>
+                        <pre><code>PyErr_Occurred
+PyErr_Clear</code></pre>
+                    </div>
+
+                    <div class="card">
+                        <h4>List Operations</h4>
+                        <pre><code>PyList_Size
+PyList_GetItem</code></pre>
+                    </div>
+
+                    <div class="card">
+                        <h4>Module Operations</h4>
+                        <pre><code>PyImport_AddModule
+PyModule_GetDict</code></pre>
+                    </div>
+
+                    <div class="card">
+                        <h4>Reference Counting</h4>
+                        <pre><code>Py_IncRef
+Py_DecRef</code></pre>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p><strong>Document Version:</strong> 1.0</p>
+            <p><strong>Last Updated:</strong> 2025-10-24</p>
+            <p><strong>Authors:</strong> J.J. Tolton, Claude (AI Assistant)</p>
+            <p style="margin-top: 20px; opacity: 0.8;">Built with 🐍 Python + 🔮 Prolog = ✨ Magic</p>
+        </footer>
+    </div>
+</body>
+</html>
