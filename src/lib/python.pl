@@ -74,9 +74,17 @@ true.
     python_home('/home/user/.local/share/uv/python/cpython-3.11.14-linux-x86_64-gnu')
 ]).
 true.
+
+% Enable verbose mode for debugging import issues
+?- py_initialize([
+    shared_library_path('/path/to/libpython3.11.so'),
+    verbose(true)
+]).
+true.
 ```
 
 Note: Use `python_executable` for venvs - Python will automatically configure sys.path correctly.
+The `verbose(true)` option enables Python's verbose mode, showing all module imports and cleanup.
 
 ## Python C API Functions Used
 
@@ -221,6 +229,7 @@ py_initialize :-
 %   - shared_library_path(Path): Path to libpython*.so
 %   - python_home(Path): Python home directory (sets PYTHONHOME)
 %   - python_executable(Path): Path to Python executable (for venvs)
+%   - verbose(true|false): Enable Python verbose mode for debugging
 %
 % @throws permission_error if Python is already initialized
 %
@@ -231,6 +240,8 @@ py_initialize :-
 %                    python_home('/path/to/python/home')]).
 % ?- py_initialize([shared_library_path('/path/to/libpython3.11.so'),
 %                    python_executable('/path/to/.venv/bin/python3')]).
+% ?- py_initialize([shared_library_path('/path/to/libpython3.11.so'),
+%                    verbose(true)]).
 % ```
 %
 py_initialize(Options) :-
@@ -258,15 +269,26 @@ process_init_options([python_home(Path)|Rest]) :-
 process_init_options([python_executable(Path)|Rest]) :-
     python_state_set(python_executable_override, Path),
     process_init_options(Rest).
+process_init_options([verbose(Flag)|Rest]) :-
+    must_be(atom, Flag),
+    (   (Flag = true ; Flag = false)
+    ->  python_state_set(python_verbose_override, Flag),
+        process_init_options(Rest)
+    ;   throw(error(domain_error(boolean, Flag), process_init_options/1))
+    ).
 process_init_options([Unknown|_]) :-
     throw(error(domain_error(py_initialize_option, Unknown), process_init_options/1)).
 
 %% apply_python_home
 %
-% Apply python_home and python_executable settings if provided.
+% Apply python_home, python_executable, and verbose settings if provided.
 % Must be called after load_python_library_once and before Py_Initialize.
 %
 apply_python_home :-
+    (   catch(python_state_get(python_verbose_override, true), _, fail)
+    ->  os:setenv("PYTHONVERBOSE", "1")
+    ;   true
+    ),
     (   catch(python_state_get(python_executable_override, ExePath), _, fail)
     ->  ffi:'Py_DecodeLocale'(ExePath, 0, WideExePath),
         ffi:'Py_SetProgramName'(WideExePath)
