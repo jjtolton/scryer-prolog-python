@@ -13,6 +13,15 @@ Write normal, professional commit messages as if written by a human developer.
 
 **README attribution**: The README.md notes that some documentation is procedurally generated to ground and guide development. This is sufficient acknowledgment.
 
+## Git Push Policy
+
+**NEVER push to GitHub without explicit permission from the user.**
+
+- Always commit changes locally first
+- Wait for user to explicitly say "push" or "push to GitHub" before using `git push`
+- When work is complete, inform the user that changes are committed and ready to push
+- Example: "Changes committed locally. Ready to push to GitHub when you're ready."
+
 ## Project Status: Active Research
 
 **THIS IS A RESEARCH PROJECT WITH UNSTABLE API/ARCHITECTURE/GOALS.**
@@ -32,7 +41,7 @@ python.pl (our module)
     ↓ ffi:'PyDict_New'(...)
 Scryer FFI (library(ffi))
     ↓ use_foreign_module(...)
-libpython3.10.so (Python C API)
+libpython3.XX.so (Python C API)
 ```
 
 **Key insight**: Functions work, macros don't. `Py_XDecRef` is a C macro, so we implement it in Prolog. Type-check macros (`PyLong_Check`, etc.) aren't available, so we use a try-convert approach with `PyErr_Occurred`.
@@ -87,18 +96,86 @@ The single-file module is organized into sections:
 5. **Type Conversion** - Bidirectional Prolog ↔ Python (atoms, integers, floats, booleans)
 6. **Code Execution** - `py_run_simple_string/1` (simple) and `/5` (with globals/locals)
 
+## Python Library Configuration
+
+The library uses a 3-tier configuration system to locate the Python shared library:
+
+**Priority (highest to lowest):**
+1. **`python.pl`** - User configuration file (git-ignored)
+2. **`LIBPYTHON_PATH`** - Environment variable
+3. **Auto-detection** - Searches common system locations
+
+### Configuration File (python.pl)
+
+For permanent configuration, create `python.pl` from the example:
+
+```bash
+cp python.pl.example python.pl
+```
+
+Example configuration:
+```prolog
+% Define python_library_path_user/1 (multifile predicate)
+python_library_path_user('/home/user/miniconda3/envs/myenv/lib/libpython3.11.so').
+```
+
+**IMPORTANT**: You must `consult('python.pl')` BEFORE loading the module:
+
+```prolog
+?- consult('python.pl').
+?- use_module('src/lib/python').
+?- py_initialize.
+```
+
+Or in a script:
+```prolog
+:- consult('python.pl').
+:- use_module('src/lib/python').
+:- initialization(main).
+```
+
+### Environment Variable
+
+For temporary/per-session configuration:
+```bash
+export LIBPYTHON_PATH=/path/to/libpython3.11.so
+scryer-prolog examples/python_demo.pl
+```
+
+### Auto-Detection
+
+Automatically searches these locations for Python 3.10, 3.11, or 3.12:
+- **Linux**: `/usr/lib/x86_64-linux-gnu/libpython3.{12,11,10}.so`
+- **macOS (Apple Silicon)**: `/opt/homebrew/lib/libpython3.{12,11,10}.dylib`
+- **macOS (Intel)**: `/usr/local/lib/libpython3.{12,11,10}.dylib`
+
+See `python_library_path/1` in `src/lib/python.pl` for implementation.
+
+### Environment Managers
+
+**See [docs/PYTHON_ENVIRONMENTS.md](docs/PYTHON_ENVIRONMENTS.md) for detailed guides on:**
+- pyenv (requires `--enable-shared` flag)
+- Conda/Miniconda (requires `LD_LIBRARY_PATH`)
+- virtualenv (inherits from base Python)
+- uv (fast Rust-based package manager)
+
+**Critical for Conda/pyenv**: Set `LD_LIBRARY_PATH` (Linux) or `DYLD_LIBRARY_PATH` (macOS):
+```bash
+export LD_LIBRARY_PATH="$(python3-config --prefix)/lib:$LD_LIBRARY_PATH"
+```
+
 ## Development Commands
 
 ### Running Tests
 
 ```bash
 # Core functionality tests
-scryer-prolog test_all_types.pl           # Type conversion (atoms, ints, floats)
-scryer-prolog test_dict_to_list.pl        # Dictionary operations
-scryer-prolog test_globals_locals.pl      # Globals/locals execution
+scryer-prolog examples/tests/test_all_types.pl           # Type conversion (atoms, ints, floats)
+scryer-prolog examples/tests/test_dict_to_list.pl        # Dictionary operations
+scryer-prolog examples/tests/test_globals_locals.pl      # Globals/locals execution
 
 # Memory management stress tests
-scryer-prolog test_memory_management.pl   # 1000+ cycle stress tests
+scryer-prolog examples/tests/test_memory_management.pl   # 1000+ cycle stress tests
 
 # Examples
 scryer-prolog examples/python_demo.pl     # Basic demo (v0.1.0)
@@ -125,9 +202,9 @@ scryer-prolog examples/python_demo_v2.pl  # Advanced demo (v0.2.0)
 
 If FFI hangs or crashes:
 1. **Check function signatures** - Wrong signature = hang/segfault
-2. **Macro vs function** - If `nm -D libpython3.10.so | grep FuncName` returns nothing, it's a macro
+2. **Macro vs function** - If `nm -D libpythonX.XX.so | grep FuncName` returns nothing, it's a macro
 3. **Test incrementally** - Add ONE function at a time to `use_foreign_module`
-4. **Void functions syntax** - No parentheses: `'Py_Finalize'([], void)` not `'Py_Finalize'`
+4. **Multifile directive syntax** - MUST use parentheses: `:- multifile(pred/1).` not `:- multifile pred/1.`
 
 Example diagnostic:
 ```bash
@@ -195,6 +272,38 @@ When working with borrowed references (e.g., from `PyModule_GetDict`):
 (GlobalsOwned = true -> py_xdecref(GlobalsDict) ; true)
 ```
 
+## Scryer Prolog Syntax Requirements
+
+**CRITICAL**: Scryer Prolog has strict syntax requirements that differ from other Prologs:
+
+1. **Multifile directives MUST use parentheses**:
+   ```prolog
+   % CORRECT
+   :- multifile(pred/1).
+
+   % WRONG - causes syntax_error(incomplete_reduction)
+   :- multifile pred/1.
+   ```
+
+2. **Single-quoted strings MUST be on one line**:
+   ```prolog
+   % CORRECT
+   throw(error(my_error, 'Short message'))
+
+   % WRONG - causes syntax_error(invalid_single_quoted_character)
+   throw(error(my_error, 'Multi
+   line string'))
+   ```
+
+3. **Dynamic directives also need parentheses**:
+   ```prolog
+   % CORRECT
+   :- dynamic(flag/0).
+
+   % WRONG
+   :- dynamic flag/0.
+   ```
+
 ## Key Design Questions Being Explored
 
 These are **active research questions**, not settled decisions:
@@ -212,19 +321,10 @@ When making changes, document trade-offs and alternative approaches. The "right"
 
 - **ARCHITECTURE.md** / **ARCHITECTURE.html** - Comprehensive architecture overview, current state, challenges, roadmap
 - **DESIGN_STATE_MANAGEMENT.md** - Memory management and reference counting design
+- **DESIGN_GLOBALS_LOCALS.md** - Globals/locals execution model
+- **PYTHON_ENVIRONMENTS.md** - Python environment manager configuration guide
 - **README.md** - User-facing API documentation (with big research warning)
 - **PACKAGE.md** - Version history and roadmap
-
-## Python Version
-
-The library automatically detects and loads Python 3.10, 3.11, or 3.12 shared libraries. It searches common locations on Linux (x86_64) and macOS (Homebrew on both Intel and Apple Silicon).
-
-Search order:
-1. Linux: `/usr/lib/x86_64-linux-gnu/libpython3.{12,11,10}.so`
-2. macOS (Apple Silicon): `/opt/homebrew/lib/libpython3.{12,11,10}.dylib`
-3. macOS (Intel): `/usr/local/lib/libpython3.{12,11,10}.dylib`
-
-See `python_library_path/1` and `candidate_python_library/1` in `src/lib/python.pl` for implementation details.
 
 ## Common Gotchas
 
@@ -233,3 +333,5 @@ See `python_library_path/1` and `candidate_python_library/1` in `src/lib/python.
 3. **Segfaults**: Decrefing a BORROWED reference or decrefing twice
 4. **Type conversion failures**: Check `PyErr_Occurred` after every conversion attempt
 5. **State persistence**: Python state persists between `py_run_simple_string` calls until `py_finalize`
+6. **Syntax errors**: Use parentheses for multifile/dynamic directives, single-line single-quoted strings only
+7. **Configuration order**: Must `consult('python.pl')` BEFORE `use_module('src/lib/python')`

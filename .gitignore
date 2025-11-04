@@ -5,6 +5,11 @@ target/
 # User Python configuration
 python.pl
 
+# Python virtual environments
+.venv/
+venv/
+env/
+
 libpython-clj/
 
 # Scryer Prolog core files (not part of Python integration)
