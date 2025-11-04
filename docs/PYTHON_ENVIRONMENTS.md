@@ -72,15 +72,15 @@ After installation with `--enable-shared`:
 
 ### Configuration
 
-#### Method 1: Using `python_config.pl`
+#### Method 1: Using `python.pl`
 
 ```bash
-cp python_config.pl.example python_config.pl
+cp python.pl.example python.pl
 ```
 
-Edit `python_config.pl`:
+Edit `python.pl`:
 ```prolog
-python_library_path_config('/home/user/.pyenv/versions/3.11.5/lib/libpython3.11.so').
+python_library_path_user('/home/user/.pyenv/versions/3.11.5/lib/libpython3.11.so').
 ```
 
 #### Method 2: Using environment variable
@@ -131,16 +131,16 @@ python3-config --prefix
 
 ### Configuration
 
-#### Method 1: Using `python_config.pl`
+#### Method 1: Using `python.pl`
 
 ```bash
-cp python_config.pl.example python_config.pl
+cp python.pl.example python.pl
 ```
 
-Edit `python_config.pl`:
+Edit `python.pl`:
 ```prolog
 % Replace with your actual conda environment path
-python_library_path_config('/home/user/miniconda3/envs/myenv/lib/libpython3.11.so').
+python_library_path_user('/home/user/miniconda3/envs/myenv/lib/libpython3.11.so').
 ```
 
 #### Method 2: Using environment variable
@@ -209,7 +209,7 @@ The issue reporter ([#1](https://github.com/jjtolton/scryer-prolog-python/issues
    export DYLD_LIBRARY_PATH="$(python3-config --prefix)/lib:$DYLD_LIBRARY_PATH"
    ```
 
-3. Try using `python_config.pl` to explicitly specify the path.
+3. Try using `python.pl` to explicitly specify the path.
 
 4. If FFI signature mismatches occur, please report them as an issue with details about your platform and Python version.
 
@@ -287,16 +287,16 @@ uv python dir 3.11
 
 ### Configuration
 
-#### Method 1: Using `python_config.pl`
+#### Method 1: Using `python.pl`
 
 ```bash
-cp python_config.pl.example python_config.pl
+cp python.pl.example python.pl
 ```
 
-Edit `python_config.pl`:
+Edit `python.pl`:
 ```prolog
 % Get the path from: uv python dir 3.11
-python_library_path_config('/home/user/.local/share/uv/python/cpython-3.11.5-linux-x86_64-gnu/lib/libpython3.11.so').
+python_library_path_user('/home/user/.local/share/uv/python/cpython-3.11.5-linux-x86_64-gnu/lib/libpython3.11.so').
 ```
 
 #### Method 2: Using environment variable
@@ -332,7 +332,7 @@ export LIBPYTHON_PATH="/path/to/libpython3.11.so"
 scryer-prolog examples/python_demo.pl
 ```
 
-This overrides auto-detection and takes precedence over `python_config.pl`.
+This overrides auto-detection and takes precedence over `python.pl`.
 
 ### LD_LIBRARY_PATH (Linux) / DYLD_LIBRARY_PATH (macOS)
 
@@ -369,7 +369,7 @@ export LD_LIBRARY_PATH="$HOME/.pyenv/versions/3.11.5/lib:$LD_LIBRARY_PATH"
 
 Scryer Prolog searches for the Python library in this order:
 
-1. **`python_config.pl`** - User configuration file (highest priority)
+1. **`python.pl`** - User configuration file (highest priority)
 2. **`LIBPYTHON_PATH`** - Environment variable
 3. **Auto-detection** - Searches common system locations
 
@@ -392,7 +392,7 @@ If all three fail, you'll see an error message with setup instructions.
    # Should show libpython3.11.so path
    ```
 
-3. Try explicit configuration with `python_config.pl` or `LIBPYTHON_PATH`.
+3. Try explicit configuration with `python.pl` or `LIBPYTHON_PATH`.
 
 ### "initialization/1 failed" or FFI errors (macOS)
 
