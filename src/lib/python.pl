@@ -317,32 +317,33 @@ py_finalize :-
 
 %% py_run_simple_string(+Code)
 %
-% Execute Python code from a string.
+% Execute Python code from an atom or string.
 % The code is executed in the __main__ module's namespace.
 % State persists between calls, so variables assigned in one call
 % can be accessed in subsequent calls.
 %
-% @param Code A string (char list) containing Python code to execute
+% @param Code An atom or string (char list) containing Python code to execute
 % @throws existence_error if Python is not initialized
 % @throws python_error if the Python code raises an exception
 %
 % Example:
 % ```prolog
-% ?- py_run_simple_string("x = 10").
+% ?- py_run_simple_string('x = 10').
 % true.
 %
-% ?- py_run_simple_string("y = x * 2").
+% ?- py_run_simple_string('y = x * 2').
 % true.
 %
-% ?- py_run_simple_string("print(y)").
+% ?- py_run_simple_string('print(y)').
 % 20
 % true.
 % ```
 %
 py_run_simple_string(Code) :-
-    must_be(list, Code),
+    (atom(Code) -> atom_chars(Code, CodeChars) ; CodeChars = Code),
+    must_be(list, CodeChars),
     (   is_python_initialized
-    ->  ffi:'PyRun_SimpleString'(Code, Result),
+    ->  ffi:'PyRun_SimpleString'(CodeChars, Result),
         (Result = 0 -> true ; throw(error(python_error(Result), py_run_simple_string/1)))
     ;   throw(error(existence_error(python_interpreter, not_initialized), py_run_simple_string/1))
     ).
@@ -421,7 +422,7 @@ load_python_library_once :-
     is_library_loaded, !.
 load_python_library_once :-
     python_library_path(LibPath),
-    use_foreign_module(LibPath, [
+    use_foreign_module_global(LibPath, [
         % Core Python functions (BASELINE - WORKING)
         'Py_Initialize'([], void),
         'Py_Finalize'([], void),
