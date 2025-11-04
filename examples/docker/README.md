@@ -32,6 +32,28 @@ The demo script:
 4. Makes an API call to GitHub to get Scryer Prolog's star count
 5. Demonstrates that everything works together seamlessly
 
+## Quick Python Testing
+
+Test Python interactively in the container with one-liners:
+
+```bash
+# Hello World from Python
+docker run --rm -it scryer-python-demo scryer-prolog -g "use_module('src/lib/python'), py_initialize([shared_library_path('/root/.local/share/uv/python/cpython-3.11.14-linux-x86_64-gnu/lib/libpython3.11.so'), python_executable('/app/.venv/bin/python3')]), py_run_simple_string(\"print('Hello from Python!')\"), py_finalize, halt"
+
+# Python math
+docker run --rm -it scryer-python-demo scryer-prolog -g "use_module('src/lib/python'), py_initialize([shared_library_path('/root/.local/share/uv/python/cpython-3.11.14-linux-x86_64-gnu/lib/libpython3.11.so'), python_executable('/app/.venv/bin/python3')]), py_run_simple_string(\"x = [1, 2, 3, 4, 5]\"), py_run_simple_string(\"print(f'Sum: {sum(x)}')\"), py_finalize, halt"
+
+# HTTP request with requests library
+docker run --rm -it scryer-python-demo scryer-prolog -g "use_module('src/lib/python'), py_initialize([shared_library_path('/root/.local/share/uv/python/cpython-3.11.14-linux-x86_64-gnu/lib/libpython3.11.so'), python_executable('/app/.venv/bin/python3')]), py_run_simple_string(\"import requests; r = requests.get('https://httpbin.org/json'); print(r.status_code)\"), py_finalize, halt"
+```
+
+Or for interactive exploration, drop into a shell:
+
+```bash
+docker run --rm -it scryer-python-demo /bin/bash
+# Then run: scryer-prolog
+```
+
 ## Expected Output
 
 ```
@@ -76,3 +98,9 @@ To run your own Prolog script, mount it as a volume:
 ```bash
 docker run --rm -v $(pwd)/my_script.pl:/app/my_script.pl scryer-python-demo scryer-prolog my_script.pl
 ```
+or do a quick functionality test:
+
+```bash
+docker run --rm scryer-python-demo scryer-prolog -g 'write(hey),nl'
+```
+
