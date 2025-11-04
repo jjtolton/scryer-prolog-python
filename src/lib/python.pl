@@ -77,6 +77,12 @@ This implementation is inspired by:
 :- use_module(library(files)).
 :- use_module(library(os)).
 
+%% Multifile hooks for python.pl configuration
+:- multifile(python_library_path_user/1).
+:- multifile(python_home/1).
+:- multifile(python_executable/1).
+:- multifile(python_verbose/1).
+
 %% ============================================
 %% State Management Abstraction
 %% ============================================
@@ -229,26 +235,26 @@ py_run_simple_string(Code) :-
 %% python_library_path(-Path)
 %
 % Determines the path to the Python shared library.
+% Tries multiple common locations for Python 3.12, 3.11, and 3.10.
 %
 % Search order:
-% 1. User configuration file (python_config.pl) if it exists
-% 2. LIBPYTHON_PATH environment variable if set
-% 3. Auto-detection from common locations
+% 1. Linux x86_64 system Python (3.12, 3.11, 3.10)
+% 2. macOS Homebrew (Apple Silicon): /opt/homebrew/lib
+% 3. macOS Homebrew (Intel): /usr/local/lib
 %
 % Fails if no compatible Python library is found.
 %
 python_library_path(Path) :-
-    % Try user config file first
-    (   exists_file("python_config.pl")
-    ->  consult('python_config.pl'),
-        python_library_path_config(Path)
+    % Try user-defined path first (from python.pl if consulted)
+    (   catch(python_library_path_user(Path), _, fail)
+    ->  true
     % Then try environment variable
-    ;   getenv('LIBPYTHON_PATH', EnvPath),
+    ;   catch(get_env_var('LIBPYTHON_PATH', EnvPath), _, fail),
         atom_chars(EnvPath, EnvPathChars),
         file_exists(EnvPathChars),
         !,
         Path = EnvPath
-    % Finally, auto-detect
+    % Finally auto-detect
     ;   candidate_python_library(PathAtom),
         atom_chars(PathAtom, PathChars),
         file_exists(PathChars),
@@ -257,35 +263,14 @@ python_library_path(Path) :-
     % All methods failed
     ;   throw(error(
             existence_error(python_library, not_found),
-            context(_, 'Could not find Python shared library. Tried:
-1. python_config.pl configuration file
-2. LIBPYTHON_PATH environment variable
-3. Auto-detection (Python 3.10, 3.11, 3.12)
-
-See INSTALL.md for setup instructions.')
+            context(_, 'Could not find Python shared library. See INSTALL.md or consult python.pl for configuration.')
         ))
     ).
 
-%% python_library_path_config(-Path)
-%
-% Hook for user configuration file.
-% This predicate is defined by the user in python_config.pl if they
-% want to override the default library path detection.
-%
-% This is a multifile predicate that can be defined in python_config.pl.
-%
-:- multifile python_library_path_config/1.
-
-%% getenv(+VarName, -Value)
-%
-% Get environment variable. Fails if not set.
-%
-getenv(VarName, Value) :-
-    catch(
-        (os:getenv(VarName, Value), Value \= ''),
-        _,
-        fail
-    ).
+%% get_env_var(+Var, -Value)
+% Get environment variable. Fails if not set or empty.
+get_env_var(Var, Value) :-
+    catch((os:getenv(Var, Value), Value \= ''), _, fail).
 
 %% candidate_python_library(-Path)
 %

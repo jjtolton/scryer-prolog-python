@@ -1,0 +1,104 @@
+%% python.pl - Python Environment Configuration
+%
+% This file allows you to configure the Python shared library path
+% for Scryer Prolog's Python integration.
+%
+% USAGE:
+% 1. Copy this file to python.pl (without the .example extension)
+% 2. Uncomment and modify the configuration predicates below
+% 3. Load this file BEFORE loading the python module:
+%
+%    ?- consult('python.pl').
+%    ?- use_module('src/lib/python').
+%    ?- py_initialize.
+%
+% Or in a script:
+%    :- consult('python.pl').
+%    :- use_module('src/lib/python').
+%    :- initialization(main).
+%    main :- py_initialize, ...
+%
+% NOTE: python.pl is git-ignored, so your local configuration
+% won't be committed to version control.
+
+%% python_library_path_user(-Path)
+%
+% Specify the exact path to your Python shared library.
+% This is the primary configuration - if set, it will be used
+% instead of auto-detection.
+%
+% Examples:
+%
+% % System Python 3.11 on Linux
+% python_library_path_user('/usr/lib/x86_64-linux-gnu/libpython3.11.so').
+%
+% % Homebrew Python on macOS (Apple Silicon)
+% python_library_path_user('/opt/homebrew/lib/libpython3.11.dylib').
+%
+% % Homebrew Python on macOS (Intel)
+% python_library_path_user('/usr/local/lib/libpython3.11.dylib').
+%
+% % pyenv installation
+% python_library_path_user('/home/user/.pyenv/versions/3.11.5/lib/libpython3.11.so').
+%
+% % Conda environment
+% python_library_path_user('/home/user/miniconda3/envs/myenv/lib/libpython3.11.so').
+%
+% % uv-managed Python
+% python_library_path_user('/home/user/.local/share/uv/python/cpython-3.11.5-linux-x86_64-gnu/lib/libpython3.11.so').
+%
+% Uncomment and modify one of the examples above, or add your own:
+%
+% python_library_path_user('/path/to/your/libpython3.X.so').
+
+%% python_home(-Path)
+%
+% Optional: Specify the Python home directory (PYTHONHOME).
+% This is used to set the PYTHONHOME environment variable before
+% initializing Python. Useful for Conda environments and virtual environments.
+%
+% Examples:
+%
+% % Conda environment
+% python_home('/home/user/miniconda3/envs/myenv').
+%
+% % pyenv installation
+% python_home('/home/user/.pyenv/versions/3.11.5').
+%
+% % System Python
+% python_home('/usr').
+%
+% Uncomment and modify:
+%
+% python_home('/path/to/python/home').
+
+%% python_executable(-Path)
+%
+% Optional: Specify the Python executable path.
+% This can be used for additional validation or debugging.
+%
+% Examples:
+%
+% % Conda environment
+% python_executable('/home/user/miniconda3/envs/myenv/bin/python').
+%
+% % pyenv installation
+% python_executable('/home/user/.pyenv/versions/3.11.5/bin/python').
+%
+% Uncomment and modify:
+%
+% python_executable('/path/to/python').
+
+%% python_verbose(+Boolean)
+%
+% Optional: Enable verbose logging for Python initialization.
+% Set to 'true' to see detailed debug output, 'false' for quiet mode.
+%
+% Examples:
+%
+% python_verbose(true).   % Enable verbose logging
+% python_verbose(false).  % Quiet mode (default)
+%
+% Uncomment and modify:
+%
+% python_verbose(false).

@@ -3,7 +3,7 @@ target/
 .direnv/
 
 # User Python configuration
-python_config.pl
+python.pl
 
 libpython-clj/
 
@@ -113,3 +113,4 @@ libpython-clj/
 /tests/
 /tools/
 /wambook/
+.ediprolog-tmp
