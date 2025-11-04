@@ -28,7 +28,6 @@ libpython-clj/
 /.git-blame-ignore-revs
 /.gitattributes
 /.gitmodules
-/.github/
 /benches/
 /build/
 /learn/

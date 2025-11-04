@@ -1,0 +1,70 @@
+name: Test macOS arm64 (Apple Silicon)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test/arm64-compatibility
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-macos-arm64:
+    name: Test on macOS arm64 (M1)
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: System information
+        run: |
+          echo "=== System Information ==="
+          uname -a
+          sysctl hw.optional.arm64
+          sw_vers
+
+      - name: Install Homebrew Python 3.12
+        run: |
+          brew install python@3.12
+          echo "Python version:"
+          /opt/homebrew/opt/python@3.12/bin/python3.12 --version
+          echo "Python location:"
+          which /opt/homebrew/opt/python@3.12/bin/python3.12
+          echo "libpython location:"
+          ls -la /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
+          file /opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Build Scryer Prolog
+        run: |
+          git clone https://github.com/mthom/scryer-prolog.git /tmp/scryer-prolog
+          cd /tmp/scryer-prolog
+          $HOME/.cargo/bin/cargo build --release
+          cp target/release/scryer-prolog /usr/local/bin/
+          scryer-prolog -v
+
+      - name: Run minimal FFI test
+        run: |
+          echo "=== Running minimal FFI test ==="
+          scryer-prolog manual_tests/test_arm64_minimal.pl || true
+
+      - name: Run incremental FFI tests
+        run: |
+          echo "=== Running incremental FFI tests ==="
+          scryer-prolog manual_tests/test_arm64_incremental.pl || true
+
+      - name: Run full arm64 test
+        run: |
+          echo "=== Running full arm64 test ==="
+          scryer-prolog manual_tests/test_macos_arm64_python312.pl || true
+
+      - name: Run diagnostic tests
+        run: |
+          echo "=== Running diagnostic tests ==="
+          scryer-prolog manual_tests/test_arm64_diagnostics.pl || true
