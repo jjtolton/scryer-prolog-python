@@ -437,7 +437,7 @@ load_python_library_once :-
         'PyDict_SetItemString'([ptr, cstr, ptr], int),
         'PyDict_GetItemString'([ptr, cstr], ptr),
         'PyDict_Keys'([ptr], ptr),
-        'PyDict_Size'([ptr], i64),
+        'PyDict_Size'([ptr], long),
         'PyLong_FromLong'([long], ptr),
         'PyFloat_FromDouble'([double], ptr),
         'PyUnicode_FromString'([cstr], ptr),
@@ -454,8 +454,8 @@ load_python_library_once :-
         'PyErr_Clear'([], void),    % Clear the error
 
         % List operations (for iterating dict keys)
-        'PyList_Size'([ptr], i64),
-        'PyList_GetItem'([ptr, i64], ptr),
+        'PyList_Size'([ptr], long),
+        'PyList_GetItem'([ptr, long], ptr),
 
         % Module operations (for py_run_simple_string/5)
         'PyImport_AddModule'([cstr], ptr),
