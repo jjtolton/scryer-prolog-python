@@ -1,5 +1,6 @@
 :- module(python, [
     py_initialize/0,
+    py_initialize/1,
     py_finalize/0,
     py_run_simple_string/1,
     py_run_simple_string/5,
@@ -13,14 +14,15 @@
     py_incref/1,
     py_decref/1,
     py_xdecref/1,
-    with_new_pyobject/3
+    with_new_pyobject/3,
+    python_library_path/1
 ]).
 
 /** Python Integration Library
 
 This module provides integration with Python using the FFI library.
 It follows a machine-based API similar to libscryer-clj where you:
-1. Initialize the Python interpreter (py_initialize/0)
+1. Initialize the Python interpreter (py_initialize/0 or py_initialize/1)
 2. Execute Python code (py_run_simple_string/1)
 3. Finalize when done (py_finalize/0)
 
@@ -49,6 +51,32 @@ true.
 ?- py_finalize.
 true.
 ```
+
+## Specifying Python Library Path and Virtual Environments
+
+If auto-detection fails or you want to use a specific Python installation:
+
+```prolog
+% Just specify the library path
+?- py_initialize([shared_library_path('/path/to/libpython3.11.so')]).
+true.
+
+% For virtual environments, specify python_executable (recommended)
+?- py_initialize([
+    shared_library_path('/home/user/.local/share/uv/python/cpython-3.11.14-linux-x86_64-gnu/lib/libpython3.11.so'),
+    python_executable('/home/user/project/.venv/bin/python3')
+]).
+true.
+
+% Alternatively, specify python_home for base Python installations
+?- py_initialize([
+    shared_library_path('/home/user/.local/share/uv/python/cpython-3.11.14-linux-x86_64-gnu/lib/libpython3.11.so'),
+    python_home('/home/user/.local/share/uv/python/cpython-3.11.14-linux-x86_64-gnu')
+]).
+true.
+```
+
+Note: Use `python_executable` for venvs - Python will automatically configure sys.path correctly.
 
 ## Python C API Functions Used
 
@@ -185,6 +213,71 @@ py_initialize :-
         mark_python_initialized
     ).
 
+%% py_initialize(+Options)
+%
+% Initialize the Python interpreter with options.
+%
+% @param Options List of options:
+%   - shared_library_path(Path): Path to libpython*.so
+%   - python_home(Path): Python home directory (sets PYTHONHOME)
+%   - python_executable(Path): Path to Python executable (for venvs)
+%
+% @throws permission_error if Python is already initialized
+%
+% Examples:
+% ```prolog
+% ?- py_initialize([shared_library_path('/path/to/libpython3.11.so')]).
+% ?- py_initialize([shared_library_path('/path/to/libpython3.11.so'),
+%                    python_home('/path/to/python/home')]).
+% ?- py_initialize([shared_library_path('/path/to/libpython3.11.so'),
+%                    python_executable('/path/to/.venv/bin/python3')]).
+% ```
+%
+py_initialize(Options) :-
+    must_be(list, Options),
+    (   is_python_initialized
+    ->  throw(error(permission_error(create, python_interpreter, already_initialized), py_initialize/1))
+    ;   process_init_options(Options),
+        load_python_library_once,
+        apply_python_home,
+        ffi:'Py_Initialize',
+        mark_python_initialized
+    ).
+
+%% process_init_options(+Options)
+%
+% Process initialization options and set state accordingly.
+%
+process_init_options([]).
+process_init_options([shared_library_path(Path)|Rest]) :-
+    python_state_set(python_library_path_override, Path),
+    process_init_options(Rest).
+process_init_options([python_home(Path)|Rest]) :-
+    python_state_set(python_home_override, Path),
+    process_init_options(Rest).
+process_init_options([python_executable(Path)|Rest]) :-
+    python_state_set(python_executable_override, Path),
+    process_init_options(Rest).
+process_init_options([Unknown|_]) :-
+    throw(error(domain_error(py_initialize_option, Unknown), process_init_options/1)).
+
+%% apply_python_home
+%
+% Apply python_home and python_executable settings if provided.
+% Must be called after load_python_library_once and before Py_Initialize.
+%
+apply_python_home :-
+    (   catch(python_state_get(python_executable_override, ExePath), _, fail)
+    ->  ffi:'Py_DecodeLocale'(ExePath, 0, WideExePath),
+        ffi:'Py_SetProgramName'(WideExePath)
+    ;   true
+    ),
+    (   catch(python_state_get(python_home_override, HomePath), _, fail)
+    ->  ffi:'Py_DecodeLocale'(HomePath, 0, WideHomePath),
+        ffi:'Py_SetPythonHome'(WideHomePath)
+    ;   true
+    ).
+
 %% py_finalize
 %
 % Finalize the Python interpreter and free all resources.
@@ -207,25 +300,25 @@ py_finalize :-
 % State persists between calls, so variables assigned in one call
 % can be accessed in subsequent calls.
 %
-% @param Code An atom containing Python code to execute
+% @param Code A string (char list) containing Python code to execute
 % @throws existence_error if Python is not initialized
 % @throws python_error if the Python code raises an exception
 %
 % Example:
 % ```prolog
-% ?- py_run_simple_string('x = 10').
+% ?- py_run_simple_string("x = 10").
 % true.
 %
-% ?- py_run_simple_string('y = x * 2').
+% ?- py_run_simple_string("y = x * 2").
 % true.
 %
-% ?- py_run_simple_string('print(y)').
+% ?- py_run_simple_string("print(y)").
 % 20
 % true.
 % ```
 %
 py_run_simple_string(Code) :-
-    must_be(atom, Code),
+    must_be(list, Code),
     (   is_python_initialized
     ->  ffi:'PyRun_SimpleString'(Code, Result),
         (Result = 0 -> true ; throw(error(python_error(Result), py_run_simple_string/1)))
@@ -245,8 +338,11 @@ py_run_simple_string(Code) :-
 % Fails if no compatible Python library is found.
 %
 python_library_path(Path) :-
-    % Try user-defined path first (from python.pl if consulted)
-    (   catch(python_library_path_user(Path), _, fail)
+    % Try override from py_initialize/1 first
+    (   catch(python_state_get(python_library_path_override, Path), _, fail)
+    ->  true
+    % Then try user-defined path (from python.pl if consulted)
+    ;   catch(python_library_path_user(Path), _, fail)
     ->  true
     % Then try environment variable
     ;   catch(get_env_var('LIBPYTHON_PATH', EnvPath), _, fail),
@@ -307,6 +403,9 @@ load_python_library_once :-
         % Core Python functions (BASELINE - WORKING)
         'Py_Initialize'([], void),
         'Py_Finalize'([], void),
+        'Py_SetPythonHome'([ptr], void),
+        'Py_SetProgramName'([ptr], void),
+        'Py_DecodeLocale'([cstr, ptr], ptr),
         'PyRun_SimpleString'([cstr], int),
 
         % TEST FIRST HALF
@@ -539,7 +638,7 @@ pyobject_to_prolog_value(PyObject, Value) :-
 % Execute Python code with explicit globals and locals dictionaries.
 % Similar to libpython-clj's run-simple-string.
 %
-% @param Code Python code to execute (atom)
+% @param Code Python code to execute (string/char list)
 % @param GlobalsIn List of Key-Value pairs for global namespace
 % @param LocalsIn List of Key-Value pairs for local namespace
 % @param GlobalsOut Resulting global namespace as Key-Value list
@@ -547,7 +646,7 @@ pyobject_to_prolog_value(PyObject, Value) :-
 %
 % Example:
 % ```prolog
-% ?- py_run_simple_string('x = a + b',
+% ?- py_run_simple_string("x = a + b",
 %                         [a-5, b-10],
 %                         [],
 %                         Globals,
@@ -557,7 +656,7 @@ pyobject_to_prolog_value(PyObject, Value) :-
 % ```
 %
 py_run_simple_string(Code, GlobalsIn, LocalsIn, GlobalsOut, LocalsOut) :-
-    must_be(atom, Code),
+    must_be(list, Code),
     must_be(list, GlobalsIn),
     must_be(list, LocalsIn),
     is_python_initialized,
