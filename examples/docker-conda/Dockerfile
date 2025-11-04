@@ -23,17 +23,15 @@ ENV PATH="/opt/conda/bin:$PATH"
 
 # Create a conda environment with Python 3.11 and install packages
 # Use --override-channels to avoid TOS requirements from default channels
-# NOTE: NumPy and other packages with C extensions don't work yet due to
-# Scryer FFI limitation (needs RTLD_GLOBAL support). Using pure-Python packages only.
 RUN conda create -n myenv python=3.11 --override-channels -c conda-forge -y && \
-    conda run -n myenv pip install requests
+    conda run -n myenv pip install requests numpy
 
-# Install Rust and Scryer Prolog from source
+# Install Rust and Scryer Prolog from source (with RTLD_GLOBAL support for NumPy)
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:$PATH"
 
 WORKDIR /tmp
-RUN git clone https://github.com/mthom/scryer-prolog.git && \
+RUN git clone --branch rtld-global-support https://github.com/jjtolton/scryer-prolog.git && \
     cd scryer-prolog && \
     cargo build --release && \
     mv target/release/scryer-prolog /usr/local/bin/ && \
@@ -76,14 +74,18 @@ main :-
     py_run_simple_string("print(f'Conda env: {sys.prefix}')"),
     py_run_simple_string("print()"),
 
-    py_run_simple_string("import requests"),
-    py_run_simple_string("print(f'Requests version: {requests.__version__}')"),
+    py_run_simple_string("import numpy as np"),
+    py_run_simple_string("print(f'NumPy version: {np.__version__}')"),
+    py_run_simple_string("arr = np.array([1, 2, 3, 4, 5])"),
+    py_run_simple_string("print(f'NumPy array sum: {arr.sum()}')"),
     py_run_simple_string("print()"),
+
+    py_run_simple_string("import requests"),
     py_run_simple_string("response = requests.get('https://api.github.com/repos/mthom/scryer-prolog')"),
     py_run_simple_string("print(f'Scryer Prolog GitHub stars: {response.json()[\"stargazers_count\"]}')"),
     py_run_simple_string("print()"),
 
-    py_run_simple_string("print('🎉 Scryer-Python + Conda Demo: SUCCESS!')"),
+    py_run_simple_string("print('🎉 Scryer-Python + Conda + NumPy: SUCCESS!')"),
 
     py_finalize,
     halt.
