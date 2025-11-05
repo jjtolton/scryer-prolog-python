@@ -2,21 +2,40 @@
 
 ## Prerequisites
 
-### 1. Scryer Prolog
+### 1. Scryer Prolog (with RTLD_GLOBAL support)
 
-Install Scryer Prolog v0.10.0 or later:
+**IMPORTANT**: ScryPy requires a fork of Scryer Prolog with RTLD_GLOBAL support for proper Python C extension loading.
+
+Install from the `rtld-global-support` branch:
 
 ```bash
-# From source
+# Clone the fork with RTLD_GLOBAL support
+git clone https://github.com/jjtolton/scryer-prolog.git
+cd scryer-prolog
+git checkout rtld-global-support
+
+# Install Rust if you don't have it
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+source $HOME/.cargo/env
+
+# Build Scryer Prolog
+cargo build --release
+
+# Install to system path (optional)
+sudo cp target/release/scryer-prolog /usr/local/bin/
+scryer-prolog -v
+```
+
+**Why this fork?**
+The standard Scryer Prolog loads foreign libraries without `RTLD_GLOBAL`, which prevents Python C extensions (like NumPy, pandas, etc.) from resolving symbols. This fork adds an optional `rtld_global` flag to `use_foreign_module/3`.
+
+**Alternative: Use system Scryer** (basic Python only, no C extensions):
+```bash
 git clone https://github.com/mthom/scryer-prolog
 cd scryer-prolog
 cargo build --release
-
-# The binary will be at target/release/scryer-prolog
-# Add it to your PATH or create a symlink
 ```
-
-See the [Scryer Prolog installation guide](https://github.com/mthom/scryer-prolog#installation) for more details.
+Note: Without RTLD_GLOBAL support, Python packages that use C extensions may fail to load.
 
 ### 2. Python Shared Library
 

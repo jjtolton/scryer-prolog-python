@@ -25,8 +25,9 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:$PATH"
 
 WORKDIR /tmp
-RUN git clone https://github.com/mthom/scryer-prolog.git && \
+RUN git clone https://github.com/jjtolton/scryer-prolog.git && \
     cd scryer-prolog && \
+    git checkout rtld-global-support && \
     cargo build --release && \
     mv target/release/scryer-prolog /usr/local/bin/ && \
     cd .. && rm -rf scryer-prolog
@@ -67,10 +68,10 @@ main :-
     py_run_simple_string("print(f'Requests version: {requests.__version__}')"),
     py_run_simple_string("print()"),
 
-    py_run_simple_string("response = requests.get('https://api.github.com/repos/mthom/scryer-prolog')"),
-    py_run_simple_string("print(f'Scryer Prolog GitHub stars: {response.json()[\"stargazers_count\"]}')"),
+    py_run_simple_string("response = requests.get('https://api.github.com/repos/jjtolton/scrypy')"),
+    py_run_simple_string("print(f'ScryPy GitHub stars: {response.json()[\"stargazers_count\"]}')"),
     py_run_simple_string("print()"),
-    py_run_simple_string("print('🎉 Scryer-Python Docker Demo: SUCCESS!')"),
+    py_run_simple_string("print('🎉 ScryPy Docker Demo: SUCCESS!')"),
 
     py_finalize,
     halt.

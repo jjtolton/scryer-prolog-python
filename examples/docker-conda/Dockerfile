@@ -81,11 +81,11 @@ main :-
     py_run_simple_string("print()"),
 
     py_run_simple_string("import requests"),
-    py_run_simple_string("response = requests.get('https://api.github.com/repos/mthom/scryer-prolog')"),
-    py_run_simple_string("print(f'Scryer Prolog GitHub stars: {response.json()[\"stargazers_count\"]}')"),
+    py_run_simple_string("response = requests.get('https://api.github.com/repos/jjtolton/scrypy')"),
+    py_run_simple_string("print(f'ScryPy GitHub stars: {response.json()[\"stargazers_count\"]}')"),
     py_run_simple_string("print()"),
 
-    py_run_simple_string("print('🎉 Scryer-Python + Conda + NumPy: SUCCESS!')"),
+    py_run_simple_string("print('🎉 ScryPy + Conda + NumPy: SUCCESS!')"),
 
     py_finalize,
     halt.

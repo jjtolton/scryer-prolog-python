@@ -1,10 +1,10 @@
-# Docker Example: Scryer-Python with Conda
+# Docker Example: ScryPy with Conda
 
-This example demonstrates scrypy integration with Conda/Miniconda environments, including support for NumPy and other C extension packages.
+This example demonstrates ScryPy integration with Conda/Miniconda environments, including support for NumPy and other C extension packages.
 
 ## NumPy and C Extensions Now Supported! 🎉
 
-This example uses a custom build of Scryer Prolog with **RTLD_GLOBAL support**, which enables Python C extensions (NumPy, SciPy, pandas, etc.) to work correctly. The standard Scryer Prolog release loads libraries with `RTLD_LOCAL`, which prevents C extensions from resolving Python API symbols.
+This example uses the **jjtolton/scryer-prolog fork** with **RTLD_GLOBAL support** (branch: `rtld-global-support`), which enables Python C extensions (NumPy, SciPy, pandas, etc.) to work correctly. The standard Scryer Prolog release loads libraries with `RTLD_LOCAL`, which prevents C extensions from resolving Python API symbols.
 
 **Once the RTLD_GLOBAL PR is merged upstream**, you'll be able to use the official Scryer Prolog releases with NumPy and other scientific Python packages.
 
@@ -13,7 +13,7 @@ This example uses a custom build of Scryer Prolog with **RTLD_GLOBAL support**, 
 - Installing Miniconda
 - Creating a conda environment with Python 3.11
 - Installing scientific Python packages (NumPy, requests)
-- Using `scrypy` with conda-managed Python
+- Using ScryPy with conda-managed Python
 - Demonstrating `python_executable` option for conda envs
 - **NumPy array operations working with RTLD_GLOBAL**
 

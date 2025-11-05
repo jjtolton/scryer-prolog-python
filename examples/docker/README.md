@@ -1,14 +1,14 @@
-# Docker Example: Scryer-Python Complete Setup
+# Docker Example: ScryPy Complete Setup
 
-This example demonstrates a complete end-to-end setup of scrypy in Docker, from scratch.
+This example demonstrates a complete end-to-end setup of ScryPy in Docker, from scratch.
 
 ## What This Demonstrates
 
-- Installing Scryer Prolog
+- Installing Scryer Prolog (with RTLD_GLOBAL support from jjtolton/scryer-prolog fork)
 - Installing Python with `uv`
 - Creating a virtual environment
 - Installing Python packages (`requests`)
-- Using `scrypy` to call Python from Prolog
+- Using ScryPy to call Python from Prolog
 - Making HTTP requests from Python via Prolog
 
 ## Quick Start
@@ -29,7 +29,7 @@ The demo script:
 1. Initializes Python using the venv's Python executable
 2. Prints Python version information
 3. Imports and uses the `requests` library
-4. Makes an API call to GitHub to get Scryer Prolog's star count
+4. Makes an API call to GitHub to get ScryPy's star count
 5. Demonstrates that everything works together seamlessly
 
 ## Quick Python Testing
