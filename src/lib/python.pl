@@ -694,7 +694,8 @@ pyobject_to_prolog_value(PyObject, Value) :-
 % ```
 %
 py_run_simple_string(Code, GlobalsIn, LocalsIn, GlobalsOut, LocalsOut) :-
-    must_be(list, Code),
+    (atom(Code) -> atom_chars(Code, CodeChars) ; CodeChars = Code),
+    must_be(chars, CodeChars),
     must_be(list, GlobalsIn),
     must_be(list, LocalsIn),
     is_python_initialized,
@@ -725,7 +726,7 @@ py_run_simple_string(Code, GlobalsIn, LocalsIn, GlobalsOut, LocalsOut) :-
     % Execute code and ensure cleanup
     setup_call_cleanup(
         % Execute: PyRun_String(code, Py_file_input=257, globals, locals)
-        ffi:'PyRun_String'(Code, 257, GlobalsDict, LocalsDict, ResultPtr),
+        ffi:'PyRun_String'(CodeChars, 257, GlobalsDict, LocalsDict, ResultPtr),
         % Process results
         (ResultPtr = 0 ->
             throw(error(python_error(execution_failed), py_run_simple_string/5))

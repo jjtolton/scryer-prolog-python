@@ -1,4 +1,4 @@
-:- use_module('src/lib/python').
+:- use_module('../../src/lib/python').
 
 test :-
     write('Module loaded successfully'), nl.

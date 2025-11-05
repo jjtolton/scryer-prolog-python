@@ -1,7 +1,9 @@
 :- use_module(library(format)).
+:- use_module(library(lists)).
 :- use_module('../../../src/lib/python').
 :- initialization(main).
 
+:- dynamic(test_count/1).
 test_count(0).
 
 increment_test :-
@@ -42,7 +44,7 @@ test_quick_start :-
         py_finalize,
         pass('Quick Start')
     ), Error, (
-        (is_python_initialized -> py_finalize ; true),
+        catch(py_finalize, _, true),
         fail_test('Quick Start', Error)
     )).
 
@@ -55,7 +57,7 @@ test_simple_execution :-
         py_finalize,
         pass('Simple Execution')
     ), Error, (
-        (is_python_initialized -> py_finalize ; true),
+        catch(py_finalize, _, true),
         fail_test('Simple Execution', Error)
     )).
 
@@ -69,7 +71,7 @@ test_globals_locals :-
         ;   fail_test('Globals/Locals', 'result-30 not in Globals')),
         py_finalize
     ), Error, (
-        (is_python_initialized -> py_finalize ; true),
+        catch(py_finalize, _, true),
         fail_test('Globals/Locals', Error)
     )).
 
@@ -86,7 +88,7 @@ test_dictionary_operations :-
         ;   fail_test('Dictionary Operations', 'Name not Alice')),
         py_finalize
     ), Error, (
-        (is_python_initialized -> py_finalize ; true),
+        catch(py_finalize, _, true),
         fail_test('Dictionary Operations', Error)
     )).
 
@@ -103,7 +105,7 @@ test_dict_to_list :-
         ;   fail_test('Dict to List', 'Expected keys not in list')),
         py_finalize
     ), Error, (
-        (is_python_initialized -> py_finalize ; true),
+        catch(py_finalize, _, true),
         fail_test('Dict to List', Error)
     )).
 
@@ -118,6 +120,6 @@ test_prolog_to_py_dict :-
         ;   fail_test('Prolog to Python Dict', 'X not 10')),
         py_finalize
     ), Error, (
-        (is_python_initialized -> py_finalize ; true),
+        catch(py_finalize, _, true),
         fail_test('Prolog to Python Dict', Error)
     )).

@@ -1,4 +1,4 @@
-:- use_module('src/lib/python').
+:- use_module('../../src/lib/python').
 
 test_basic_dict :-
     write('Testing basic dictionary operations...'), nl,

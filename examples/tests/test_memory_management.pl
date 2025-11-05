@@ -1,4 +1,4 @@
-:- use_module('src/lib/python').
+:- use_module('../../src/lib/python').
 
 test_dict_lifecycle :-
     write('=== Test 1: Dictionary Lifecycle ==='), nl,

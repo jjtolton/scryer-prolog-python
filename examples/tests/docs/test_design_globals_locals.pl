@@ -1,7 +1,9 @@
 :- use_module(library(format)).
+:- use_module(library(lists)).
 :- use_module('../../../src/lib/python').
 :- initialization(main).
 
+:- dynamic(test_count/1).
 test_count(0).
 
 increment_test :-
@@ -39,7 +41,7 @@ test_custom_globals :-
         ;   fail_test('Custom Globals', 'x-15 not in NewGlobals')),
         py_finalize
     ), Error, (
-        (is_python_initialized -> py_finalize ; true),
+        catch(py_finalize, _, true),
         fail_test('Custom Globals', Error)
     )).
 
@@ -53,7 +55,7 @@ test_separate_locals :-
         ;   fail_test('Separate Locals', 'y-10 not in NewLocals')),
         py_finalize
     ), Error, (
-        (is_python_initialized -> py_finalize ; true),
+        catch(py_finalize, _, true),
         fail_test('Separate Locals', Error)
     )).
 
@@ -67,6 +69,6 @@ test_extract_value :-
         ;   fail_test('Extract Value', 'result-4 not found')),
         py_finalize
     ), Error, (
-        (is_python_initialized -> py_finalize ; true),
+        catch(py_finalize, _, true),
         fail_test('Extract Value', Error)
     )).

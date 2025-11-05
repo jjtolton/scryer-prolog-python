@@ -1,4 +1,4 @@
-:- use_module('src/lib/python').
+:- use_module('../../src/lib/python').
 
 test_init_only :-
     write('Testing initialization...'), nl,
