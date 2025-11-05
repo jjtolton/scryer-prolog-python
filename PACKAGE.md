@@ -38,7 +38,7 @@ Once we reach 1.0.0, we will follow strict semantic versioning:
 
 ## Package Name
 
-`scryer-prolog-python` or `python` (when used as library)
+`scrypy` (formerly `scryer-prolog-python`)
 
 ## Dependencies
 

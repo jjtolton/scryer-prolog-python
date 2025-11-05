@@ -196,7 +196,7 @@ chmod +x run-scryer-conda.sh
 
 ### Apple Silicon macOS + Conda
 
-The issue reporter ([#1](https://github.com/jjtolton/scryer-prolog-python/issues/1)) encountered problems on Apple Silicon with Conda. If you experience similar issues:
+The issue reporter ([#1](https://github.com/jjtolton/scrypy/issues/1)) encountered problems on Apple Silicon with Conda. If you experience similar issues:
 
 1. Verify the library architecture matches:
    ```bash
@@ -396,7 +396,7 @@ If all three fail, you'll see an error message with setup instructions.
 
 ### "initialization/1 failed" or FFI errors (macOS)
 
-If you see errors like in [issue #1](https://github.com/jjtolton/scryer-prolog-python/issues/1):
+If you see errors like in [issue #1](https://github.com/jjtolton/scrypy/issues/1):
 
 1. Set `DYLD_LIBRARY_PATH`:
    ```bash
@@ -437,7 +437,7 @@ If you encounter issues:
 1. Check this guide for your environment manager.
 2. Review [INSTALL.md](../INSTALL.md) for general installation instructions.
 3. See [README.md](../README.md#requirements) for requirements.
-4. Open an issue at https://github.com/jjtolton/scryer-prolog-python/issues with:
+4. Open an issue at https://github.com/jjtolton/scrypy/issues with:
    - Your OS and architecture (e.g., macOS 15.3 arm64)
    - Python version and environment manager
    - Error messages

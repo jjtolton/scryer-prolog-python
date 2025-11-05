@@ -1,6 +1,6 @@
 # Docker Example: Scryer-Python Complete Setup
 
-This example demonstrates a complete end-to-end setup of scryer-python in Docker, from scratch.
+This example demonstrates a complete end-to-end setup of scrypy in Docker, from scratch.
 
 ## What This Demonstrates
 
@@ -8,7 +8,7 @@ This example demonstrates a complete end-to-end setup of scryer-python in Docker
 - Installing Python with `uv`
 - Creating a virtual environment
 - Installing Python packages (`requests`)
-- Using `scryer-python` to call Python from Prolog
+- Using `scrypy` to call Python from Prolog
 - Making HTTP requests from Python via Prolog
 
 ## Quick Start
@@ -17,8 +17,8 @@ Build and run the demo:
 
 ```bash
 # From project root
-docker build -f examples/docker/Dockerfile -t scryer-python-demo .
-docker run --rm scryer-python-demo
+docker build -f examples/docker/Dockerfile -t scrypy-demo .
+docker run --rm scrypy-demo
 ```
 
 **Note**: Building Scryer Prolog from source takes 5-10 minutes. For faster local testing without Docker, see the main project README.
@@ -38,19 +38,19 @@ Test Python interactively in the container with one-liners:
 
 ```bash
 # Hello World from Python
-docker run --rm -it scryer-python-demo scryer-prolog -g "use_module('src/lib/python'), py_initialize([shared_library_path('/root/.local/share/uv/python/cpython-3.11.14-linux-x86_64-gnu/lib/libpython3.11.so'), python_executable('/app/.venv/bin/python3')]), py_run_simple_string(\"print('Hello from Python!')\"), py_finalize, halt"
+docker run --rm -it scrypy-demo scryer-prolog -g "use_module('src/lib/python'), py_initialize([shared_library_path('/root/.local/share/uv/python/cpython-3.11.14-linux-x86_64-gnu/lib/libpython3.11.so'), python_executable('/app/.venv/bin/python3')]), py_run_simple_string(\"print('Hello from Python!')\"), py_finalize, halt"
 
 # Python math
-docker run --rm -it scryer-python-demo scryer-prolog -g "use_module('src/lib/python'), py_initialize([shared_library_path('/root/.local/share/uv/python/cpython-3.11.14-linux-x86_64-gnu/lib/libpython3.11.so'), python_executable('/app/.venv/bin/python3')]), py_run_simple_string(\"x = [1, 2, 3, 4, 5]\"), py_run_simple_string(\"print(f'Sum: {sum(x)}')\"), py_finalize, halt"
+docker run --rm -it scrypy-demo scryer-prolog -g "use_module('src/lib/python'), py_initialize([shared_library_path('/root/.local/share/uv/python/cpython-3.11.14-linux-x86_64-gnu/lib/libpython3.11.so'), python_executable('/app/.venv/bin/python3')]), py_run_simple_string(\"x = [1, 2, 3, 4, 5]\"), py_run_simple_string(\"print(f'Sum: {sum(x)}')\"), py_finalize, halt"
 
 # HTTP request with requests library
-docker run --rm -it scryer-python-demo scryer-prolog -g "use_module('src/lib/python'), py_initialize([shared_library_path('/root/.local/share/uv/python/cpython-3.11.14-linux-x86_64-gnu/lib/libpython3.11.so'), python_executable('/app/.venv/bin/python3')]), py_run_simple_string(\"import requests; r = requests.get('https://httpbin.org/json'); print(r.status_code)\"), py_finalize, halt"
+docker run --rm -it scrypy-demo scryer-prolog -g "use_module('src/lib/python'), py_initialize([shared_library_path('/root/.local/share/uv/python/cpython-3.11.14-linux-x86_64-gnu/lib/libpython3.11.so'), python_executable('/app/.venv/bin/python3')]), py_run_simple_string(\"import requests; r = requests.get('https://httpbin.org/json'); print(r.status_code)\"), py_finalize, halt"
 ```
 
 Or for interactive exploration, drop into a shell:
 
 ```bash
-docker run --rm -it scryer-python-demo /bin/bash
+docker run --rm -it scrypy-demo /bin/bash
 # Then run: scryer-prolog
 ```
 
@@ -96,11 +96,11 @@ RUN uv pip install requests numpy pandas
 To run your own Prolog script, mount it as a volume:
 
 ```bash
-docker run --rm -v $(pwd)/my_script.pl:/app/my_script.pl scryer-python-demo scryer-prolog my_script.pl
+docker run --rm -v $(pwd)/my_script.pl:/app/my_script.pl scrypy-demo scryer-prolog my_script.pl
 ```
 or do a quick functionality test:
 
 ```bash
-docker run --rm scryer-python-demo scryer-prolog -g 'write(hey),nl'
+docker run --rm scrypy-demo scryer-prolog -g 'write(hey),nl'
 ```
 

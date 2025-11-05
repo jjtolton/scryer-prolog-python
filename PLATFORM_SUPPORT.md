@@ -15,7 +15,7 @@
 
 - **Python versions**: 3.10, 3.11, 3.12
 - **Installation**: Homebrew, Conda
-- **Known issues**: FFI type signature compatibility (see [Issue #1](https://github.com/jjtolton/scryer-prolog-python/issues/1))
+- **Known issues**: FFI type signature compatibility (see [Issue #1](https://github.com/jjtolton/scrypy/issues/1))
 - **Testing**: Automated CI via GitHub Actions on this branch
 
 ### 🚧 macOS x86_64 (Intel)
@@ -80,8 +80,8 @@ If you have Apple Silicon hardware and want to help test:
 
 1. **Clone this branch**:
    ```bash
-   git clone -b test/arm64-compatibility https://github.com/jjtolton/scryer-prolog-python.git
-   cd scryer-prolog-python
+   git clone -b test/arm64-compatibility https://github.com/jjtolton/scrypy.git
+   cd scrypy
    ```
 
 2. **Install dependencies**:
@@ -99,13 +99,13 @@ If you have Apple Silicon hardware and want to help test:
 
 4. **Run diagnostic tests**:
    ```bash
-   cd ../scryer-prolog-python
+   cd ../scrypy
    scryer-prolog manual_tests/test_arm64_minimal.pl
    scryer-prolog manual_tests/test_arm64_incremental.pl
    scryer-prolog manual_tests/test_arm64_diagnostics.pl
    ```
 
-5. **Report results**: Comment on [Issue #1](https://github.com/jjtolton/scryer-prolog-python/issues/1)
+5. **Report results**: Comment on [Issue #1](https://github.com/jjtolton/scrypy/issues/1)
 
 ## Continuous Integration
 
@@ -118,7 +118,7 @@ We use GitHub Actions for automated testing:
 - Tests: Minimal, incremental, and full diagnostic suites
 - Triggered: On push to `test/arm64-compatibility`, manual dispatch
 
-**View results**: https://github.com/jjtolton/scryer-prolog-python/actions
+**View results**: https://github.com/jjtolton/scrypy/actions
 
 ## Future Platform Support
 

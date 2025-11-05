@@ -1,6 +1,6 @@
 # Docker Example: Scryer-Python with Conda
 
-This example demonstrates scryer-python integration with Conda/Miniconda environments, including support for NumPy and other C extension packages.
+This example demonstrates scrypy integration with Conda/Miniconda environments, including support for NumPy and other C extension packages.
 
 ## NumPy and C Extensions Now Supported! 🎉
 
@@ -13,7 +13,7 @@ This example uses a custom build of Scryer Prolog with **RTLD_GLOBAL support**, 
 - Installing Miniconda
 - Creating a conda environment with Python 3.11
 - Installing scientific Python packages (NumPy, requests)
-- Using `scryer-python` with conda-managed Python
+- Using `scrypy` with conda-managed Python
 - Demonstrating `python_executable` option for conda envs
 - **NumPy array operations working with RTLD_GLOBAL**
 
@@ -23,8 +23,8 @@ Build and run the demo:
 
 ```bash
 # From project root
-docker build -f examples/docker-conda/Dockerfile -t scryer-python-conda .
-docker run --rm scryer-python-conda
+docker build -f examples/docker-conda/Dockerfile -t scrypy-conda .
+docker run --rm scrypy-conda
 ```
 
 **Note**: Building Scryer Prolog from source takes 5-10 minutes.
@@ -44,19 +44,19 @@ Test Python with conda environment using one-liners:
 
 ```bash
 # NumPy array operations
-docker run --rm scryer-python-conda /bin/bash -c "source /app/conda_env.sh && scryer-prolog -g \"use_module('src/lib/python'), py_initialize([shared_library_path('/opt/conda/envs/myenv/lib/libpython3.11.so'), python_executable('/opt/conda/envs/myenv/bin/python')]), py_run_simple_string(\\\"import numpy as np; arr = np.array([1,2,3,4,5]); print(f'Array: {arr}, Sum: {arr.sum()}')\\\"), py_finalize, halt\""
+docker run --rm scrypy-conda /bin/bash -c "source /app/conda_env.sh && scryer-prolog -g \"use_module('src/lib/python'), py_initialize([shared_library_path('/opt/conda/envs/myenv/lib/libpython3.11.so'), python_executable('/opt/conda/envs/myenv/bin/python')]), py_run_simple_string(\\\"import numpy as np; arr = np.array([1,2,3,4,5]); print(f'Array: {arr}, Sum: {arr.sum()}')\\\"), py_finalize, halt\""
 
 # NumPy statistics
-docker run --rm scryer-python-conda /bin/bash -c "source /app/conda_env.sh && scryer-prolog -g \"use_module('src/lib/python'), py_initialize([shared_library_path('/opt/conda/envs/myenv/lib/libpython3.11.so'), python_executable('/opt/conda/envs/myenv/bin/python')]), py_run_simple_string(\\\"import numpy as np; arr = np.array([1,2,3,4,5]); print(f'Mean: {arr.mean()}, Std: {arr.std()}')\\\"), py_finalize, halt\""
+docker run --rm scrypy-conda /bin/bash -c "source /app/conda_env.sh && scryer-prolog -g \"use_module('src/lib/python'), py_initialize([shared_library_path('/opt/conda/envs/myenv/lib/libpython3.11.so'), python_executable('/opt/conda/envs/myenv/bin/python')]), py_run_simple_string(\\\"import numpy as np; arr = np.array([1,2,3,4,5]); print(f'Mean: {arr.mean()}, Std: {arr.std()}')\\\"), py_finalize, halt\""
 
 # HTTP request with requests library
-docker run --rm scryer-python-conda /bin/bash -c "source /app/conda_env.sh && scryer-prolog -g \"use_module('src/lib/python'), py_initialize([shared_library_path('/opt/conda/envs/myenv/lib/libpython3.11.so'), python_executable('/opt/conda/envs/myenv/bin/python')]), py_run_simple_string(\\\"import requests; r = requests.get('https://httpbin.org/json'); print(f'Status: {r.status_code}')\\\"), py_finalize, halt\""
+docker run --rm scrypy-conda /bin/bash -c "source /app/conda_env.sh && scryer-prolog -g \"use_module('src/lib/python'), py_initialize([shared_library_path('/opt/conda/envs/myenv/lib/libpython3.11.so'), python_executable('/opt/conda/envs/myenv/bin/python')]), py_run_simple_string(\\\"import requests; r = requests.get('https://httpbin.org/json'); print(f'Status: {r.status_code}')\\\"), py_finalize, halt\""
 ```
 
 Or for interactive exploration:
 
 ```bash
-docker run --rm -it scryer-python-conda /bin/bash
+docker run --rm -it scrypy-conda /bin/bash
 # Then run: source /app/conda_env.sh && scryer-prolog
 ```
 
@@ -130,6 +130,6 @@ Mount it as a volume:
 
 ```bash
 docker run --rm -v $(pwd)/my_script.pl:/app/my_script.pl \
-    scryer-python-conda \
+    scrypy-conda \
     /bin/bash -c "source /app/conda_env.sh && scryer-prolog my_script.pl"
 ```

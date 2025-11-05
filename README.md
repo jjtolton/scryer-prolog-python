@@ -1,4 +1,6 @@
-# Scryer Prolog Python Integration
+# ScryPy
+
+**Scryer Prolog + Python Integration**
 
 **Version: 0.2.0** (Pre-release / Alpha)
 
@@ -68,8 +70,8 @@ Unlike libpython-clj which creates one Python instance per process, this library
 
 1. Clone this repository:
 ```bash
-git clone https://github.com/jjtolton/scryer-prolog-python.git
-cd scryer-prolog-python
+git clone https://github.com/jjtolton/scrypy.git
+cd scrypy
 ```
 
 2. Install Python development libraries:

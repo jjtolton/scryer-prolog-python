@@ -86,8 +86,8 @@ Common locations:
 1. Clone this repository:
 
 ```bash
-git clone https://github.com/jjtolton/scryer-prolog-python.git
-cd scryer-prolog-python
+git clone https://github.com/jjtolton/scrypy.git
+cd scrypy
 ```
 
 2. **For system Python**: Auto-detection should work immediately.

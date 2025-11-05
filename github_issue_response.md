@@ -56,7 +56,7 @@ main :-
 
 **Run it:**
 ```bash
-cd /path/to/scryer-python
+cd /path/to/scrypy
 scryer-prolog manual_tests/test_macos_arm64_python312.pl
 ```
 
@@ -90,7 +90,7 @@ You can test with my RTLD_GLOBAL branch right now:
 git clone --branch rtld-global-support https://github.com/jjtolton/scryer-prolog.git
 cd scryer-prolog
 cargo build --release
-./target/release/scryer-prolog /path/to/scryer-python/manual_tests/test_macos_arm64_python312.pl
+./target/release/scryer-prolog /path/to/scrypy/manual_tests/test_macos_arm64_python312.pl
 ```
 
 This should work even with conda Python and will support importing NumPy, requests, and other packages.

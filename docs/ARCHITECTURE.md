@@ -1,4 +1,6 @@
-# Scryer-Prolog-Python: Architecture & Design
+# ScryPy: Architecture & Design
+
+**Scryer Prolog + Python Integration**
 
 **Version:** 0.2.0 (Pre-release / Alpha)
 **Status:** Active Development
@@ -22,7 +24,7 @@
 
 ## What Is This Repository?
 
-`scryer-prolog-python` is a **pure Prolog library** that provides seamless Python integration for Scryer Prolog using FFI (Foreign Function Interface). It allows Prolog programs to:
+`scrypy` is a **pure Prolog library** that provides seamless Python integration for Scryer Prolog using FFI (Foreign Function Interface). It allows Prolog programs to:
 
 - Execute arbitrary Python code
 - Exchange data bidirectionally between Prolog and Python
@@ -183,7 +185,7 @@ py_finalize.
 ### Directory Structure
 
 ```
-scryer-prolog-python/
+scrypy/
 ├── src/
 │   └── lib/
 │       └── python.pl          # Main library module (450+ lines)
