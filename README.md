@@ -2,7 +2,7 @@
 
 **Scryer Prolog + Python Integration**
 
-**Version: 0.2.0** (Pre-release / Alpha)
+**Version: 0.2.1** (Pre-release / Alpha)
 
 ---
 

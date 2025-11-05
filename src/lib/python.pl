@@ -367,12 +367,12 @@ python_library_path(Path) :-
     % Then try user-defined path (from python.pl if consulted)
     ;   catch(python_library_path_user(Path), _, fail)
     ->  true
-    % Then try environment variable
-    ;   catch(get_env_var('LIBPYTHON_PATH', EnvPath), _, fail),
-        atom_chars(EnvPath, EnvPathChars),
-        file_exists(EnvPathChars),
+    % Then try environment variable (EnvPath is a string from library(os))
+    ;   catch(os:getenv('LIBPYTHON_PATH', EnvPath), _, fail),
+        EnvPath \= "",  % Reject empty string
+        file_exists(EnvPath),
         !,
-        Path = EnvPath
+        atom_chars(Path, EnvPath)  % Convert string to atom for consistency
     % Finally auto-detect
     ;   candidate_python_library(PathAtom),
         atom_chars(PathAtom, PathChars),
@@ -386,10 +386,6 @@ python_library_path(Path) :-
         ))
     ).
 
-%% get_env_var(+Var, -Value)
-% Get environment variable. Fails if not set or empty.
-get_env_var(Var, Value) :-
-    catch((os:getenv(Var, Value), Value \= ''), _, fail).
 
 %% candidate_python_library(-Path)
 %
@@ -483,7 +479,7 @@ load_python_library_once :-
 
         % NOTE: PyType_GetName hangs - incorrect signature or unavailable
         % 'PyType_GetName'([ptr], cstr)
-    ], [flags([rtld_global])]),
+    ], [scope(global)]),
     mark_library_loaded.
 
 %% ============================================

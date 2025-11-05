@@ -1,6 +1,6 @@
 # Package Metadata
 
-## Version: 0.2.0
+## Version: 0.2.1
 
 **Status**: Pre-release / Alpha
 
@@ -8,7 +8,14 @@
 
 ## Version History
 
-### 0.2.0 (Current)
+### 0.2.1 (Current)
+- 🐛 **Bug Fix**: Environment variable `LIBPYTHON_PATH` now works correctly
+  - Fixed string vs atom handling for `library(os)` getenv
+  - Removed custom `get_env_var/2` wrapper, use `os:getenv/2` directly
+  - Properly handles empty string check ("" vs '')
+  - Credits: @sporeking for bug report, @triska for explanation
+
+### 0.2.0
 - ✅ Dictionary support for globals/locals
 - ✅ Extended `py_run_simple_string/5` with globals/locals arguments
 - ✅ Prolog ↔ Python type conversion (atoms, integers, floats, booleans)
