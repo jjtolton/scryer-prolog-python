@@ -1,0 +1,49 @@
+name: Test Documentation Examples
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test-docs:
+    name: Test Documentation Examples
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Python development libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3.11-dev libpython3.11
+
+      - name: Install Scryer Prolog
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source $HOME/.cargo/env
+          git clone https://github.com/mthom/scryer-prolog.git /tmp/scryer-prolog
+          cd /tmp/scryer-prolog
+          cargo build --release
+          sudo cp target/release/scryer-prolog /usr/local/bin/
+          scryer-prolog -v
+
+      - name: Verify Python library
+        run: |
+          ls -la /usr/lib/x86_64-linux-gnu/libpython3.11.so*
+          python3.11 --version
+
+      - name: Run documentation tests
+        run: |
+          cd $GITHUB_WORKSPACE
+          chmod +x examples/tests/docs/run_all_doc_tests.sh
+          ./examples/tests/docs/run_all_doc_tests.sh
+
+      - name: Report results
+        if: always()
+        run: |
+          echo "Documentation test suite completed"
+          echo "Check logs above for details"

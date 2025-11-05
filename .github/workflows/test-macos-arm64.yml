@@ -52,19 +52,19 @@ jobs:
       - name: Run minimal FFI test
         run: |
           echo "=== Running minimal FFI test ==="
-          scryer-prolog manual_tests/test_arm64_minimal.pl || true
+          scryer-prolog manual_tests/test_arm64_minimal.pl
 
       - name: Run incremental FFI tests
         run: |
           echo "=== Running incremental FFI tests ==="
-          scryer-prolog manual_tests/test_arm64_incremental.pl || true
+          scryer-prolog manual_tests/test_arm64_incremental.pl
 
       - name: Run full arm64 test
         run: |
           echo "=== Running full arm64 test ==="
-          scryer-prolog manual_tests/test_macos_arm64_python312.pl || true
+          scryer-prolog manual_tests/test_macos_arm64_python312.pl
 
       - name: Run diagnostic tests
         run: |
           echo "=== Running diagnostic tests ==="
-          scryer-prolog manual_tests/test_arm64_diagnostics.pl || true
+          scryer-prolog manual_tests/test_arm64_diagnostics.pl

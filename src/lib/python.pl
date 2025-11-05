@@ -396,12 +396,27 @@ get_env_var(Var, Value) :-
 % Generates candidate paths for Python shared libraries.
 % Order matters - tries newer versions first.
 %
+% Linux system Python
 candidate_python_library('/usr/lib/x86_64-linux-gnu/libpython3.12.so').
 candidate_python_library('/usr/lib/x86_64-linux-gnu/libpython3.11.so').
 candidate_python_library('/usr/lib/x86_64-linux-gnu/libpython3.10.so').
+
+% macOS Homebrew (Apple Silicon) - Framework structure
+candidate_python_library('/opt/homebrew/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib').
+candidate_python_library('/opt/homebrew/opt/python@3.11/Frameworks/Python.framework/Versions/3.11/lib/libpython3.11.dylib').
+candidate_python_library('/opt/homebrew/opt/python@3.10/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib').
+
+% macOS Homebrew (Apple Silicon) - Direct lib (fallback)
 candidate_python_library('/opt/homebrew/lib/libpython3.12.dylib').
 candidate_python_library('/opt/homebrew/lib/libpython3.11.dylib').
 candidate_python_library('/opt/homebrew/lib/libpython3.10.dylib').
+
+% macOS Homebrew (Intel) - Framework structure
+candidate_python_library('/usr/local/opt/python@3.12/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib').
+candidate_python_library('/usr/local/opt/python@3.11/Frameworks/Python.framework/Versions/3.11/lib/libpython3.11.dylib').
+candidate_python_library('/usr/local/opt/python@3.10/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib').
+
+% macOS Homebrew (Intel) - Direct lib (fallback)
 candidate_python_library('/usr/local/lib/libpython3.12.dylib').
 candidate_python_library('/usr/local/lib/libpython3.11.dylib').
 candidate_python_library('/usr/local/lib/libpython3.10.dylib').
