@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - main
       - test/arm64-compatibility
   pull_request:
     branches:
