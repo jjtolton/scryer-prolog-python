@@ -94,7 +94,19 @@ brew install python@3.11
 
 ## Requirements
 
-- **Scryer Prolog** v0.10.0 or later
+### Scryer Prolog (with RTLD_GLOBAL support)
+
+**For full Python C extension support** (NumPy, pandas, SciPy, etc.), you need a version of Scryer Prolog with RTLD_GLOBAL support:
+
+- **Recommended**: Use the [jjtolton/scryer-prolog](https://github.com/jjtolton/scryer-prolog) fork (branch: `rtld-global-support`)
+- **Upstream PR**: [mthom/scryer-prolog#3144](https://github.com/mthom/scryer-prolog/pull/3144) - Once merged, you can use the official release
+
+**Why this matters**: The standard Scryer Prolog loads foreign libraries with `RTLD_LOCAL`, which prevents Python C extensions from resolving symbols. The fork/PR adds an optional `rtld_global` flag to fix this.
+
+**For basic Python only** (no C extensions): Any Scryer Prolog v0.10.0+ will work, but imports like `numpy`, `pandas`, etc. will fail.
+
+### Python
+
 - **Python** 3.10, 3.11, or 3.12 with shared library (`.so` on Linux, `.dylib` on macOS)
 - **Python development package** (`python3.X-dev` on Linux)
 
