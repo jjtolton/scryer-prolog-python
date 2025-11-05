@@ -341,7 +341,7 @@ py_finalize :-
 %
 py_run_simple_string(Code) :-
     (atom(Code) -> atom_chars(Code, CodeChars) ; CodeChars = Code),
-    must_be(list, CodeChars),
+    must_be(chars, CodeChars),
     (   is_python_initialized
     ->  ffi:'PyRun_SimpleString'(CodeChars, Result),
         (Result = 0 -> true ; throw(error(python_error(Result), py_run_simple_string/1)))
@@ -437,7 +437,7 @@ load_python_library_once :-
     is_library_loaded, !.
 load_python_library_once :-
     python_library_path(LibPath),
-    use_foreign_module_global(LibPath, [
+    use_foreign_module(LibPath, [
         % Core Python functions (BASELINE - WORKING)
         'Py_Initialize'([], void),
         'Py_Finalize'([], void),
@@ -483,7 +483,7 @@ load_python_library_once :-
 
         % NOTE: PyType_GetName hangs - incorrect signature or unavailable
         % 'PyType_GetName'([ptr], cstr)
-    ]),
+    ], [flags([rtld_global])]),
     mark_library_loaded.
 
 %% ============================================
