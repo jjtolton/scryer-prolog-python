@@ -41,10 +41,11 @@ jobs:
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-      - name: Build Scryer Prolog
+      - name: Build Scryer Prolog (with RTLD_GLOBAL support)
         run: |
-          git clone https://github.com/mthom/scryer-prolog.git /tmp/scryer-prolog
+          git clone https://github.com/jjtolton/scryer-prolog.git /tmp/scryer-prolog
           cd /tmp/scryer-prolog
+          git checkout rtld-global-support
           $HOME/.cargo/bin/cargo build --release
           cp target/release/scryer-prolog /usr/local/bin/
           scryer-prolog -v
