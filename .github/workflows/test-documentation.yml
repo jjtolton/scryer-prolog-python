@@ -10,7 +10,7 @@ on:
 jobs:
   test-docs:
     name: Test Documentation Examples
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout code
@@ -19,7 +19,7 @@ jobs:
       - name: Install Python development libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3.11-dev libpython3.11
+          sudo apt-get install -y python3.10-dev libpython3.10
 
       - name: Install Scryer Prolog (with RTLD_GLOBAL support)
         run: |
@@ -34,8 +34,8 @@ jobs:
 
       - name: Verify Python library
         run: |
-          ls -la /usr/lib/x86_64-linux-gnu/libpython3.11.so*
-          python3.11 --version
+          ls -la /usr/lib/x86_64-linux-gnu/libpython3.10.so*
+          python3.10 --version
 
       - name: Run documentation tests
         run: |
