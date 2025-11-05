@@ -10,7 +10,7 @@
 :- use_module(library(debug)).
 :- use_module(library(os)).
 
-:- use_module('/path/to/src/lib/python.pl').
+:- use_module('../src/lib/python').
 
 :- initialization(main).
 
