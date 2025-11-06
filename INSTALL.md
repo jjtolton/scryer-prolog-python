@@ -4,7 +4,9 @@
 
 ### 1. Scryer Prolog (with RTLD_GLOBAL support)
 
-**IMPORTANT**: ScryPy requires a fork of Scryer Prolog with RTLD_GLOBAL support for proper Python C extension loading.
+**CRITICAL**: ScryPy **REQUIRES** the jjtolton/scryer-prolog fork with RTLD_GLOBAL support. The stock/system Scryer Prolog **WILL NOT WORK** with Python C extensions (NumPy, PyTorch, pandas, etc.).
+
+**⚠️ WARNING**: Do NOT use the system `scryer-prolog` binary from package managers (apt, brew, cargo install, etc.). These lack the required `scope(global)` support and will cause symbol lookup failures with C extensions.
 
 Install from the `rtld-global-support` branch:
 
@@ -21,21 +23,31 @@ source $HOME/.cargo/env
 # Build Scryer Prolog
 cargo build --release
 
-# Install to system path (optional)
-sudo cp target/release/scryer-prolog /usr/local/bin/
+# Verify the build
+./target/release/scryer-prolog -v
+```
+
+**Important**: Use the fork binary directly or ensure it overrides any system installation:
+
+```bash
+# Option A: Use directly (RECOMMENDED for testing)
+/path/to/scryer-prolog/target/release/scryer-prolog examples/python_demo_v2.pl
+
+# Option B: Install to system path (ensure it overrides any existing installation)
+sudo cp target/release/scryer-prolog /usr/local/bin/scryer-prolog
+which scryer-prolog  # Verify it's using /usr/local/bin/scryer-prolog
 scryer-prolog -v
 ```
 
 **Why this fork?**
-The standard Scryer Prolog loads foreign libraries without `RTLD_GLOBAL`, which prevents Python C extensions (like NumPy, pandas, etc.) from resolving symbols. This fork adds `scope(global)` option to `use_foreign_module/3` to enable RTLD_GLOBAL loading.
+The standard Scryer Prolog loads foreign libraries without `RTLD_GLOBAL`, which prevents Python C extensions from resolving symbols. This fork adds `scope(global)` option to `use_foreign_module/3` to enable RTLD_GLOBAL loading.
 
-**Alternative: Use system Scryer** (basic Python only, no C extensions):
-```bash
-git clone https://github.com/mthom/scryer-prolog
-cd scryer-prolog
-cargo build --release
-```
-Note: Without RTLD_GLOBAL support, Python packages that use C extensions may fail to load.
+Symptoms of using the wrong binary:
+- `symbol not found in flat namespace '_PyByteArray_Type'`
+- `symbol not found in flat namespace '_PyBaseObject_Type'`
+- NumPy/PyTorch/pandas imports fail
+
+**DO NOT use stock Scryer Prolog**: It will only support basic Python operations without C extensions.
 
 ### 2. Python Shared Library
 
