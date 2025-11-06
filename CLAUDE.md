@@ -22,6 +22,106 @@ Write normal, professional commit messages as if written by a human developer.
 - When work is complete, inform the user that changes are committed and ready to push
 - Example: "Changes committed locally. Ready to push to GitHub when you're ready."
 
+## Test-Driven Development (ABSOLUTE REQUIREMENT)
+
+**TESTS FIRST. ALWAYS.**
+
+### Workflow for EVERY Feature
+
+1. **RED**: Write test FIRST. See it FAIL.
+2. **GREEN**: Implement minimal code to pass.
+3. **REFACTOR**: Clean up while keeping tests green.
+
+**NEVER** write code without writing the test first. This is non-negotiable.
+
+### Test Framework
+
+ScryPy uses a simple, custom test framework (see `tests/test_framework.pl`):
+
+```prolog
+:- use_module('../tests/test_framework').
+
+test_feature_name :-
+    reset_test_state,
+    run_test('description of what is being tested', test_pred_1),
+    run_test('another test description', test_pred_2),
+    report_results.
+
+test_pred_1 :-
+    % Arrange
+    Input = ...,
+    Expected = ...,
+
+    % Act
+    actual_predicate(Input, Actual),
+
+    % Assert
+    Actual = Expected.
+```
+
+### Running Tests
+
+```bash
+# Run all type bridging tests
+scryer-prolog tests/test_all.pl
+
+# Run specific test suites
+scryer-prolog tests/unit/test_py_none.pl
+scryer-prolog tests/unit/test_py_list.pl
+scryer-prolog tests/unit/test_py_tuple.pl
+
+# Memory management stress tests
+scryer-prolog tests/integration/test_memory.pl
+```
+
+### Test Organization
+
+```
+tests/
+├── test_framework.pl          # Test infrastructure
+├── test_all.pl               # Run all tests
+├── unit/                     # Unit tests for individual predicates
+│   ├── test_py_none.pl
+│   ├── test_py_list.pl
+│   ├── test_py_tuple.pl
+│   └── test_py_attr.pl
+├── integration/              # Cross-feature integration tests
+│   ├── test_type_conversion.pl
+│   ├── test_memory.pl
+│   └── test_full_pipeline.pl
+└── fixtures/                 # Test data and helpers
+    └── python_test_values.pl
+```
+
+### Test Patterns
+
+**Pure Transformation Test**:
+```prolog
+test(list_to_pylist) :-
+    prolog_to_py_list([1, 2, 3], PyList),
+    py_list_to_prolog(PyList, Result),
+    Result = [1, 2, 3].
+```
+
+**Memory Management Test**:
+```prolog
+test(list_cleanup) :-
+    % Create and destroy 1000 times
+    between(1, 1000, _),
+    py_list_new(L),
+    py_xdecref(L),
+    fail.
+test(list_cleanup).  % Succeeds after backtracking
+```
+
+**Error Handling Test**:
+```prolog
+test(invalid_index_fails) :-
+    py_list_from_prolog([1,2,3], L),
+    \+ py_list_get(L, 99, _),  % Out of bounds should fail
+    py_xdecref(L).
+```
+
 ## Project Status: Active Research
 
 **THIS IS A RESEARCH PROJECT WITH UNSTABLE API/ARCHITECTURE/GOALS.**
