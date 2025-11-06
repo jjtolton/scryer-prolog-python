@@ -284,6 +284,44 @@ scryer-prolog examples/python_demo.pl     # Basic demo (v0.1.0)
 scryer-prolog examples/python_demo_v2.pl  # Advanced demo (v0.2.0)
 ```
 
+### String Quoting Convention
+
+**CRITICAL**: ScryPy has different quoting requirements for Python CODE vs Python DATA.
+
+**Python CODE (in `py_run_simple_string`)**: Use double quotes `"..."`
+- Reason: Supports multi-line strings, consistent with Python conventions
+- In Scryer Prolog, double quotes create strings (character code lists)
+- Examples:
+  ```prolog
+  py_run_simple_string("x = 2 + 2")
+  py_run_simple_string("result = math.sqrt(16)")
+  py_run_simple_string("def factorial(n): return 1 if n <= 1 else n * factorial(n-1)")
+  ```
+
+**Python DATA (values, variable names)**: Use single quotes `'...'` (atoms)
+- Reason: `prolog_value_to_pyobject/2` expects atoms for string conversion
+- In Scryer Prolog, single quotes create atoms
+- Examples:
+  ```prolog
+  py_dict_set(Dict, name, 'Alice')          % Value is an atom
+  py_run_simple_string("...", ['P'-1000, r-0.05], ..., ...)  % Variable names are atoms
+  member('A'-Amount, Globals)               % Variable name is an atom
+  ```
+
+**Why this matters**:
+```prolog
+% Type conversion in src/lib/python.pl expects atoms:
+prolog_value_to_pyobject(Value, PyObject) :-
+    atom(Value), !,  % Matches single-quoted 'text', not double-quoted "text"
+    ffi:'PyUnicode_FromString'(Value, PyObject).
+```
+
+**Wrong usage** (will cause type errors):
+```prolog
+py_dict_set(Dict, name, "Alice")          % ERROR: type_error(python_convertible,"Alice")
+py_run_simple_string('x = 2 + 2')         % DISCOURAGED: single quotes work but break multi-line
+```
+
 ### Interactive Development
 
 ```prolog
@@ -293,8 +331,8 @@ scryer-prolog examples/python_demo_v2.pl  # Advanced demo (v0.2.0)
 % Initialize Python
 ?- py_initialize.
 
-% Test a feature
-?- py_run_simple_string('x = 42').
+% Test a feature (note double quotes for Python code)
+?- py_run_simple_string("x = 42").
 
 % Don't forget to finalize
 ?- py_finalize.
