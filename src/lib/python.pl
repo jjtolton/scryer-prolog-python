@@ -18,7 +18,7 @@
     python_library_path/1
 ]).
 
-/** Python Integration Library
+/** Python Integration Library (v0.3.0)
 
 This module provides integration with Python using the FFI library.
 It follows a machine-based API similar to libscryer-clj where you:

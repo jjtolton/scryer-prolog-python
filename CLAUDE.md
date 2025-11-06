@@ -40,11 +40,13 @@ Prolog Code (user.pl)
 python.pl (our module)
     ↓ ffi:'PyDict_New'(...)
 Scryer FFI (library(ffi))
-    ↓ use_foreign_module(...)
-libpython3.XX.so (Python C API)
+    ↓ use_foreign_module(LibPath, [...], [scope(global)])
+libpython3.XX.so (Python C API - loaded with RTLD_GLOBAL)
 ```
 
 **Key insight**: Functions work, macros don't. `Py_XDecRef` is a C macro, so we implement it in Prolog. Type-check macros (`PyLong_Check`, etc.) aren't available, so we use a try-convert approach with `PyErr_Occurred`.
+
+**RTLD_GLOBAL (v0.3.0)**: The library now uses `scope(global)` option to load libpython with `RTLD_GLOBAL`, making symbols available for Python C extensions (NumPy, etc.). Requires Scryer Prolog fork with RTLD_GLOBAL support.
 
 ### Memory Management: Reference Counting
 
@@ -91,7 +93,7 @@ is_python_initialized :- python_state_check(python_initialized).
 The single-file module is organized into sections:
 1. **State Management Abstraction** - Blackboard-based state tracking
 2. **Reference Counting Abstraction** - `py_incref/1`, `py_decref/1`, `py_xdecref/1`, `with_new_pyobject/3`
-3. **FFI Bindings** - 23 Python C API functions loaded via `use_foreign_module`
+3. **FFI Bindings** - 23 Python C API functions loaded via `use_foreign_module/3` with `scope(global)`
 4. **Dictionary Operations** - Create/manipulate Python dicts, convert to/from Prolog lists
 5. **Type Conversion** - Bidirectional Prolog ↔ Python (atoms, integers, floats, booleans)
 6. **Code Execution** - `py_run_simple_string/1` (simple) and `/5` (with globals/locals)

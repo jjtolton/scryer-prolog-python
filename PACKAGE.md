@@ -1,6 +1,6 @@
 # Package Metadata
 
-## Version: 0.2.2
+## Version: 0.3.0
 
 **Status**: Pre-release / Alpha
 
@@ -8,7 +8,18 @@
 
 ## Version History
 
-### 0.2.2 (Current)
+### 0.3.0 (Current)
+- 🚀 **Major Feature**: RTLD_GLOBAL support for Python C extensions
+  - Now uses `use_foreign_module/3` with `scope(global)` option
+  - Enables Python C extension imports (NumPy, SciPy, pandas, etc.)
+  - Requires Scryer Prolog fork with RTLD_GLOBAL support (jjtolton/scryer-prolog)
+  - libpython symbols now available for resolution by C extension modules
+- 🧪 **Test Improvement**: Removed external network calls from Docker demo tests
+  - Removed `requests` library dependency from conda demo
+  - Removed GitHub API call that could fail due to network issues
+  - Tests now focus on NumPy C extension support (validates RTLD_GLOBAL FFI)
+
+### 0.2.2
 - 🔧 **API Change**: Removed `LIBPYTHON_PATH` environment variable support
   - Follows libpython-clj convention (no custom env var)
   - Configuration now via `python.pl` file or auto-detection only

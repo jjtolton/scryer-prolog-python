@@ -27,7 +27,7 @@ scryer-prolog -v
 ```
 
 **Why this fork?**
-The standard Scryer Prolog loads foreign libraries without `RTLD_GLOBAL`, which prevents Python C extensions (like NumPy, pandas, etc.) from resolving symbols. This fork adds an optional `rtld_global` flag to `use_foreign_module/3`.
+The standard Scryer Prolog loads foreign libraries without `RTLD_GLOBAL`, which prevents Python C extensions (like NumPy, pandas, etc.) from resolving symbols. This fork adds `scope(global)` option to `use_foreign_module/3` to enable RTLD_GLOBAL loading.
 
 **Alternative: Use system Scryer** (basic Python only, no C extensions):
 ```bash

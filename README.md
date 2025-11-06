@@ -2,7 +2,7 @@
 
 **Scryer Prolog + Python Integration**
 
-**Version: 0.2.2** (Pre-release / Alpha)
+**Version: 0.3.0** (Pre-release / Alpha)
 
 ---
 
@@ -101,7 +101,9 @@ brew install python@3.11
 - **Recommended**: Use the [jjtolton/scryer-prolog](https://github.com/jjtolton/scryer-prolog) fork (branch: `rtld-global-support`)
 - **Upstream PR**: [mthom/scryer-prolog#3144](https://github.com/mthom/scryer-prolog/pull/3144) - Once merged, you can use the official release
 
-**Why this matters**: The standard Scryer Prolog loads foreign libraries with `RTLD_LOCAL`, which prevents Python C extensions from resolving symbols. The fork/PR adds an optional `rtld_global` flag to fix this.
+**Why this matters**: The standard Scryer Prolog loads foreign libraries with `RTLD_LOCAL`, which prevents Python C extensions from resolving symbols. The fork/PR adds `scope(global)` option to `use_foreign_module/3` to enable `RTLD_GLOBAL` loading.
+
+**As of v0.3.0**: ScryPy now uses `scope(global)` by default for all Python library loading, enabling full C extension support out of the box (when using the RTLD-enabled Scryer fork).
 
 **For basic Python only** (no C extensions): Any Scryer Prolog v0.10.0+ will work, but imports like `numpy`, `pandas`, etc. will fail.
 

@@ -269,15 +269,37 @@ The library uses Scryer Prolog's FFI to directly call Python C API functions:
 │  Scryer FFI     │  ← Built into Scryer
 │  (library(ffi)) │
 └────────┬────────┘
-         │ use_foreign_module(...)
+         │ use_foreign_module(LibPath, [...], [scope(global)])
          │
 ┌────────▼────────┐
-│ libpython3.10.so│  ← System Python
+│ libpython3.10.so│  ← System Python (loaded with RTLD_GLOBAL)
 │  Python C API   │
 └─────────────────┘
 ```
 
 **No C wrapper code needed!** We call Python C API functions directly via FFI.
+
+#### RTLD_GLOBAL Support (v0.3.0)
+
+As of v0.3.0, the library uses `use_foreign_module/3` with `scope(global)` option:
+
+```prolog
+use_foreign_module(LibPath, [
+    'Py_Initialize'([], void),
+    'PyDict_New'([], ptr),
+    % ... other functions
+], [scope(global)]).
+```
+
+**Why scope(global)?**
+- **RTLD_GLOBAL** makes libpython symbols available for resolution by subsequently loaded libraries
+- **Required for Python C extensions**: NumPy, SciPy, pandas, and even standard library modules (math, socket, etc.) are C extensions that need to resolve symbols from libpython
+- Without `scope(global)`, C extension imports fail with "undefined symbol" errors
+- Uses `RTLD_LAZY` for binding (symbols resolved as needed) - this is the standard and typical choice
+
+**Platform Notes:**
+- **POSIX (Linux/macOS)**: scope option controls RTLD_LOCAL vs RTLD_GLOBAL
+- **Windows**: No effect (Windows uses different library loading model)
 
 ---
 
