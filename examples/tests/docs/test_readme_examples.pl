@@ -38,9 +38,9 @@ test_quick_start :-
     format("Test: Quick Start Example~n", []),
     catch((
         py_initialize,
-        py_run_simple_string('print("Hello from Python!")'),
-        py_run_simple_string('x = 42'),
-        py_run_simple_string('print(f"The answer is {x}")'),
+        py_run_simple_string("print(\"Hello from Python!\")",
+        py_run_simple_string("x = 42",
+        py_run_simple_string("print(f\"The answer is {x}\")",
         py_finalize,
         pass('Quick Start')
     ), Error, (
@@ -52,8 +52,8 @@ test_simple_execution :-
     format("Test: Simple Code Execution~n", []),
     catch((
         py_initialize,
-        py_run_simple_string('x = 10'),
-        py_run_simple_string('print(x * 2)'),
+        py_run_simple_string("x = 10",
+        py_run_simple_string("print(x * 2)",
         py_finalize,
         pass('Simple Execution')
     ), Error, (

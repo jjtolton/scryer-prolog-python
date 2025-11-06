@@ -1,0 +1,52 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Python development libraries
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3.11-dev libpython3.11
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+
+    - name: Clone and build Scryer Prolog fork
+      run: |
+        git clone https://github.com/jjtolton/scryer-prolog.git
+        cd scryer-prolog
+        git checkout rtld-global-support
+        cargo build --release
+        sudo cp target/release/scryer-prolog /usr/local/bin/
+        scryer-prolog -v
+
+    - name: Run smoke tests
+      run: |
+        scryer-prolog examples/python_demo.pl
+        scryer-prolog examples/python_demo_v2.pl
+
+    - name: Run test suite
+      run: |
+        scryer-prolog examples/tests/test_all_types.pl
+        scryer-prolog examples/tests/test_dict.pl
+        scryer-prolog examples/tests/test_dict_to_list.pl
+        scryer-prolog examples/tests/test_globals_locals.pl
+        scryer-prolog examples/tests/test_memory_management.pl

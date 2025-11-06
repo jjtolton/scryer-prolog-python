@@ -269,9 +269,9 @@ scryer-prolog << 'EOF'
 
 test_python :-
     py_initialize,
-    py_run_simple_string('import sys'),
-    py_run_simple_string('print(f"Python {sys.version}")'),
-    py_run_simple_string('print("Successfully loaded!")'),
+    py_run_simple_string("import sys"),
+    py_run_simple_string("print(f'Python {sys.version}')"),
+    py_run_simple_string("print('Successfully loaded!')"),
     py_finalize,
     halt.
 EOF

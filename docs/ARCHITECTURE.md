@@ -104,7 +104,7 @@ Unlike libpython-clj (which uses a single interpreter for simplicity), we could 
 ```prolog
 % Single interpreter mode (current - v0.1.x - v0.3.x)
 py_initialize.
-py_run_simple_string('x = 10').
+py_run_simple_string("x = 10").
 py_finalize.
 
 % Multiple interpreter mode (future - v0.4.0+)
@@ -458,7 +458,7 @@ prolog_to_py_dict(+List, -DictPtr)       % Convert to Python
 
 1. **Simple execution** (v0.1.0):
 ```prolog
-py_run_simple_string('x = 10')
+py_run_simple_string("x = 10")
 % Executes in __main__ namespace
 % State persists between calls
 ```

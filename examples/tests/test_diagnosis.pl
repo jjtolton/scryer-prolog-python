@@ -9,7 +9,7 @@ test :-
     ),
     write('Step 2: Initialized successfully!'), nl,
     catch(
-        py_run_simple_string('print("Hello")'),
+        py_run_simple_string("print(\"Hello\")",
         Error2,
         (write('ERROR in py_run_simple_string: '), write(Error2), nl, fail)
     ),
