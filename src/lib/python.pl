@@ -114,6 +114,10 @@ This implementation is inspired by:
 :- use_module(library(os)).
 
 %% Multifile hooks for python.pl configuration
+%%
+%% python_library_path_user(-Path)
+%% Path must be a STRING (double quotes "..."), not an atom!
+%% Example: python_library_path_user("/path/to/libpython3.11.so").
 :- multifile(python_library_path_user/1).
 :- multifile(python_home/1).
 :- multifile(python_executable/1).
@@ -351,12 +355,15 @@ py_run_simple_string(Code) :-
 %% python_library_path(-Path)
 %
 % Determines the path to the Python shared library.
-% Tries multiple common locations for Python 3.12, 3.11, and 3.10.
+%
+% @param Path String (char list) containing the library path
+%
+% IMPORTANT: Path is a STRING (double quotes "..."), not an atom (single quotes '...')!
 %
 % Search order:
-% 1. Linux x86_64 system Python (3.12, 3.11, 3.10)
-% 2. macOS Homebrew (Apple Silicon): /opt/homebrew/lib
-% 3. macOS Homebrew (Intel): /usr/local/lib
+% 1. Override from py_initialize/1 (if provided)
+% 2. User-defined path from python.pl (python_library_path_user/1)
+% 3. Auto-detection from candidate paths
 %
 % Fails if no compatible Python library is found.
 %
@@ -367,18 +374,10 @@ python_library_path(Path) :-
     % Then try user-defined path (from python.pl if consulted)
     ;   catch(python_library_path_user(Path), _, fail)
     ->  true
-    % Then try environment variable (EnvPath is a string from library(os))
-    ;   catch(os:getenv('LIBPYTHON_PATH', EnvPath), _, fail),
-        EnvPath \= "",  % Reject empty string
-        file_exists(EnvPath),
-        !,
-        atom_chars(Path, EnvPath)  % Convert string to atom for consistency
-    % Finally auto-detect
+    % Finally auto-detect (convert atoms to strings)
     ;   candidate_python_library(PathAtom),
-        atom_chars(PathAtom, PathChars),
-        file_exists(PathChars),
-        !,
-        Path = PathAtom
+        atom_chars(PathAtom, Path),
+        file_exists(Path)
     % All methods failed
     ;   throw(error(
             existence_error(python_library, not_found),

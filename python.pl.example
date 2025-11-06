@@ -27,29 +27,31 @@
 % This is the primary configuration - if set, it will be used
 % instead of auto-detection.
 %
+% IMPORTANT: Path must be a STRING (double quotes "..."), not an atom (single quotes '...')!
+%
 % Examples:
 %
 % % System Python 3.11 on Linux
-% python_library_path_user('/usr/lib/x86_64-linux-gnu/libpython3.11.so').
+% python_library_path_user("/usr/lib/x86_64-linux-gnu/libpython3.11.so").
 %
 % % Homebrew Python on macOS (Apple Silicon)
-% python_library_path_user('/opt/homebrew/lib/libpython3.11.dylib').
+% python_library_path_user("/opt/homebrew/lib/libpython3.11.dylib").
 %
 % % Homebrew Python on macOS (Intel)
-% python_library_path_user('/usr/local/lib/libpython3.11.dylib').
+% python_library_path_user("/usr/local/lib/libpython3.11.dylib").
 %
 % % pyenv installation
-% python_library_path_user('/home/user/.pyenv/versions/3.11.5/lib/libpython3.11.so').
+% python_library_path_user("/home/user/.pyenv/versions/3.11.5/lib/libpython3.11.so").
 %
 % % Conda environment
-% python_library_path_user('/home/user/miniconda3/envs/myenv/lib/libpython3.11.so').
+% python_library_path_user("/home/user/miniconda3/envs/myenv/lib/libpython3.11.so").
 %
 % % uv-managed Python
-% python_library_path_user('/home/user/.local/share/uv/python/cpython-3.11.5-linux-x86_64-gnu/lib/libpython3.11.so').
+% python_library_path_user("/home/user/.local/share/uv/python/cpython-3.11.5-linux-x86_64-gnu/lib/libpython3.11.so").
 %
 % Uncomment and modify one of the examples above, or add your own:
 %
-% python_library_path_user('/path/to/your/libpython3.X.so').
+% python_library_path_user("/path/to/your/libpython3.X.so").
 
 %% python_home(-Path)
 %

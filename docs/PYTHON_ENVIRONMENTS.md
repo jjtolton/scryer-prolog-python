@@ -80,7 +80,7 @@ cp python.pl.example python.pl
 
 Edit `python.pl`:
 ```prolog
-python_library_path_user('/home/user/.pyenv/versions/3.11.5/lib/libpython3.11.so').
+python_library_path_user("/home/user/.pyenv/versions/3.11.5/lib/libpython3.11.so").
 ```
 
 #### Method 2: Using environment variable
@@ -140,7 +140,7 @@ cp python.pl.example python.pl
 Edit `python.pl`:
 ```prolog
 % Replace with your actual conda environment path
-python_library_path_user('/home/user/miniconda3/envs/myenv/lib/libpython3.11.so').
+python_library_path_user("/home/user/miniconda3/envs/myenv/lib/libpython3.11.so").
 ```
 
 #### Method 2: Using environment variable
@@ -296,7 +296,7 @@ cp python.pl.example python.pl
 Edit `python.pl`:
 ```prolog
 % Get the path from: uv python dir 3.11
-python_library_path_user('/home/user/.local/share/uv/python/cpython-3.11.5-linux-x86_64-gnu/lib/libpython3.11.so').
+python_library_path_user("/home/user/.local/share/uv/python/cpython-3.11.5-linux-x86_64-gnu/lib/libpython3.11.so").
 ```
 
 #### Method 2: Using environment variable

@@ -1,6 +1,6 @@
 # Package Metadata
 
-## Version: 0.2.1
+## Version: 0.2.2
 
 **Status**: Pre-release / Alpha
 
@@ -8,12 +8,18 @@
 
 ## Version History
 
-### 0.2.1 (Current)
-- 🐛 **Bug Fix**: Environment variable `LIBPYTHON_PATH` now works correctly
-  - Fixed string vs atom handling for `library(os)` getenv
-  - Removed custom `get_env_var/2` wrapper, use `os:getenv/2` directly
-  - Properly handles empty string check ("" vs '')
-  - Credits: @sporeking for bug report, @triska for explanation
+### 0.2.2 (Current)
+- 🔧 **API Change**: Removed `LIBPYTHON_PATH` environment variable support
+  - Follows libpython-clj convention (no custom env var)
+  - Configuration now via `python.pl` file or auto-detection only
+  - `python_library_path_user/1` must use strings (double quotes), not atoms
+  - All path handling now uses strings consistently
+  - Credits: @sporeking for bug report, @triska for string/atom explanation
+
+### 0.2.1
+- 🐛 **Bug Fix**: Fixed string vs atom handling in path detection
+  - Fixed incorrect `atom_chars/2` conversion
+  - Removed custom `get_env_var/2` wrapper
 
 ### 0.2.0
 - ✅ Dictionary support for globals/locals

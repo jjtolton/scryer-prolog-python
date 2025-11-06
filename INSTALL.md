@@ -120,57 +120,40 @@ scryer-prolog examples/python_demo.pl
 
 ## Configuration
 
-Scryer Prolog searches for the Python library in this order:
+ScryPy searches for the Python library in this order:
 
-1. **`python_config.pl`** configuration file (highest priority)
-2. **`LIBPYTHON_PATH`** environment variable
-3. **Auto-detection** from common system locations
+1. **`python.pl`** configuration file (highest priority)
+2. **Auto-detection** from common system locations
 
-If you're using **system Python** (via `apt` or `brew`), auto-detection should work automatically. For other Python installations, choose one of the methods below.
+If you're using **system Python** (via `apt` or `brew`), auto-detection should work automatically. For other Python installations (pyenv, Conda, uv), use the configuration file method below.
 
-### Method 1: Configuration File (Recommended for Permanent Setup)
+### Method 1: Configuration File (Recommended)
 
-Create a `python_config.pl` file to specify your Python library location:
+Create a `python.pl` file to specify your Python library location:
 
 ```bash
 # Copy the example configuration
-cp python_config.pl.example python_config.pl
+cp python.pl.example python.pl
 
-# Edit python_config.pl and uncomment/modify the path
+# Edit python.pl and uncomment/modify the path
 ```
 
-Example `python_config.pl`:
+Example `python.pl`:
 
 ```prolog
 % Conda environment
-python_library_path_config('/home/user/miniconda3/envs/myenv/lib/libpython3.11.so').
+python_library_path_user("/home/user/miniconda3/envs/myenv/lib/libpython3.11.so").
 
 % Or pyenv
-python_library_path_config('/home/user/.pyenv/versions/3.11.5/lib/libpython3.11.so').
+python_library_path_user("/home/user/.pyenv/versions/3.11.5/lib/libpython3.11.so").
 
 % Or uv
-python_library_path_config('/home/user/.local/share/uv/python/cpython-3.11.5-linux-x86_64-gnu/lib/libpython3.11.so').
+python_library_path_user("/home/user/.local/share/uv/python/cpython-3.11.5-linux-x86_64-gnu/lib/libpython3.11.so").
 ```
 
-**Note**: `python_config.pl` is git-ignored, so your local configuration won't be committed.
+**Note**: Use double quotes for strings! `python.pl` is git-ignored, so your local configuration won't be committed.
 
-### Method 2: Environment Variable (Good for Temporary/Per-Session)
-
-Set the `LIBPYTHON_PATH` environment variable:
-
-```bash
-export LIBPYTHON_PATH=/path/to/libpython3.11.so
-scryer-prolog examples/python_demo.pl
-```
-
-For Conda environments:
-```bash
-conda activate myenv
-export LIBPYTHON_PATH="$(python3-config --prefix)/lib/libpython3.11.so"
-scryer-prolog examples/python_demo.pl
-```
-
-### Method 3: Auto-Detection (System Python Only)
+### Method 2: Auto-Detection (System Python Only)
 
 If you're using system Python installed via `apt-get` or `brew`, the library should be auto-detected from these locations:
 
