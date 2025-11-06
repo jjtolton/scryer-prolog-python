@@ -24,7 +24,7 @@ ENV PATH="/opt/conda/bin:$PATH"
 # Create a conda environment with Python 3.11 and install packages
 # Use --override-channels to avoid TOS requirements from default channels
 RUN conda create -n myenv python=3.11 --override-channels -c conda-forge -y && \
-    conda run -n myenv pip install requests numpy
+    conda run -n myenv pip install numpy
 
 # Install Rust and Scryer Prolog from source (with RTLD_GLOBAL support for NumPy)
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
@@ -78,11 +78,6 @@ main :-
     py_run_simple_string("print(f'NumPy version: {np.__version__}')"),
     py_run_simple_string("arr = np.array([1, 2, 3, 4, 5])"),
     py_run_simple_string("print(f'NumPy array sum: {arr.sum()}')"),
-    py_run_simple_string("print()"),
-
-    py_run_simple_string("import requests"),
-    py_run_simple_string("response = requests.get('https://api.github.com/repos/jjtolton/scrypy')"),
-    py_run_simple_string("print(f'ScryPy GitHub stars: {response.json()[\"stargazers_count\"]}')"),
     py_run_simple_string("print()"),
 
     py_run_simple_string("print('🎉 ScryPy + Conda + NumPy: SUCCESS!')"),
