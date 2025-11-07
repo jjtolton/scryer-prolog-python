@@ -21,6 +21,12 @@
     py_list_append/2,
     py_list_from_prolog/2,
     py_list_to_prolog/2,
+    % Python Tuple support
+    py_tuple_new/2,
+    py_tuple_size/2,
+    py_tuple_get/3,
+    py_tuple_from_prolog/2,
+    py_tuple_to_prolog/2,
     % Type conversion
     prolog_value_to_pyobject/2,
     pyobject_to_prolog_value/2,
@@ -488,6 +494,12 @@ load_python_library_once :-
         'PyList_SetItem'([ptr, long, ptr], int), % Set item (STEALS ref)
         'PyList_Append'([ptr, ptr], int),   % Append item (does NOT steal)
 
+        % Tuple operations
+        'PyTuple_New'([long], ptr),         % Create new tuple
+        'PyTuple_Size'([ptr], long),        % Get tuple size
+        'PyTuple_GetItem'([ptr, long], ptr), % Get item (BORROWED ref)
+        'PyTuple_SetItem'([ptr, long, ptr], int), % Set item (STEALS ref, only for new tuples)
+
         % Module operations (for py_run_simple_string/5)
         'PyImport_AddModule'([cstr], ptr),
         'PyModule_GetDict'([ptr], ptr),
@@ -934,6 +946,156 @@ collect_list_items(PyList, Index, Size, [Head|Tail]) :-
     ),
     NextIndex is Index + 1,
     collect_list_items(PyList, NextIndex, Size, Tail).
+
+%% ============================================
+%% Python Tuple Support (Version 0.4.0 Phase 1)
+%% ============================================
+
+%% py_tuple_new(+Size, -PyTuple)
+%
+% Create a new Python tuple with the specified size.
+% MEMORY: Returns a NEW reference - caller must py_xdecref(PyTuple) when done!
+%
+% Note: Tuples are immutable, but when first created via PyTuple_New,
+% they can be populated using PyTuple_SetItem before being exposed.
+%
+% Example:
+% ```prolog
+% ?- py_tuple_new(3, T), py_tuple_size(T, S), py_xdecref(T).
+% S = 3.
+% ```
+%
+py_tuple_new(Size, PyTuple) :-
+    is_python_initialized,
+    ffi:'PyTuple_New'(Size, PyTuple).
+
+%% py_tuple_size(+PyTuple, -Size)
+%
+% Get the size of a Python tuple.
+%
+% Example:
+% ```prolog
+% ?- py_tuple_from_prolog([1,2,3], T), py_tuple_size(T, S), py_xdecref(T).
+% S = 3.
+% ```
+%
+py_tuple_size(PyTuple, Size) :-
+    is_python_initialized,
+    ffi:'PyTuple_Size'(PyTuple, Size).
+
+%% py_tuple_get(+PyTuple, +Index, -Value)
+%
+% Get an item from a Python tuple by index (0-based).
+% Returns the Prolog value, not the PyObject pointer.
+%
+% Note: PyTuple_GetItem returns a BORROWED reference, so we don't decref.
+%
+% Example:
+% ```prolog
+% ?- py_tuple_from_prolog([10,20,30], T), py_tuple_get(T, 1, V), py_xdecref(T).
+% V = 20.
+% ```
+%
+py_tuple_get(PyTuple, Index, Value) :-
+    is_python_initialized,
+    ffi:'PyTuple_GetItem'(PyTuple, Index, PyItem),
+    (PyItem = 0 ->
+        fail  % Index out of bounds or error
+    ;
+        pyobject_to_prolog_value(PyItem, Value)
+    ).
+
+%% py_tuple_from_prolog(+PrologList, -PyTuple)
+%
+% Convert a Prolog list to a Python tuple.
+% Recursively converts nested lists to nested tuples.
+%
+% MEMORY: Returns a NEW reference - caller must py_xdecref(PyTuple) when done!
+%
+% Example:
+% ```prolog
+% ?- py_tuple_from_prolog([1,2,3], T), py_tuple_to_prolog(T, R), py_xdecref(T).
+% R = [1,2,3].
+% ```
+%
+py_tuple_from_prolog(PrologList, PyTuple) :-
+    is_python_initialized,
+    must_be(list, PrologList),
+    length(PrologList, Len),
+    ffi:'PyTuple_New'(Len, PyTuple),
+    fill_py_tuple(PyTuple, 0, PrologList).
+
+%% fill_py_tuple(+PyTuple, +Index, +PrologList)
+%
+% Helper predicate to fill a Python tuple from a Prolog list.
+% Uses PyTuple_SetItem which STEALS references.
+% This is only valid for newly created tuples (before they're exposed).
+%
+fill_py_tuple(_, _, []).
+fill_py_tuple(PyTuple, Index, [Head|Tail]) :-
+    % Check if Head is a list by attempting to unify with list pattern
+    (   Head = [_|_]  % Non-empty list
+    ->  py_tuple_from_prolog(Head, PySubTuple),
+        ffi:'PyTuple_SetItem'(PyTuple, Index, PySubTuple, _)
+    ;   Head = []  % Empty list
+    ->  py_tuple_from_prolog(Head, PySubTuple),
+        ffi:'PyTuple_SetItem'(PyTuple, Index, PySubTuple, _)
+    ;   % Scalar value
+        prolog_value_to_pyobject(Head, PyValue),
+        ffi:'PyTuple_SetItem'(PyTuple, Index, PyValue, _)
+    ),
+    NextIndex is Index + 1,
+    fill_py_tuple(PyTuple, NextIndex, Tail).
+
+%% py_tuple_to_prolog(+PyTuple, -PrologList)
+%
+% Convert a Python tuple to a Prolog list.
+% Recursively converts nested tuples to nested lists.
+%
+% Example:
+% ```prolog
+% ?- py_tuple_from_prolog([1,[2,3],4], T), py_tuple_to_prolog(T, R), py_xdecref(T).
+% R = [1,[2,3],4].
+% ```
+%
+py_tuple_to_prolog(PyTuple, PrologList) :-
+    is_python_initialized,
+    py_tuple_size(PyTuple, Size),
+    collect_tuple_items(PyTuple, 0, Size, PrologList).
+
+%% collect_tuple_items(+PyTuple, +Index, +Size, -Items)
+%
+% Helper predicate to collect items from a Python tuple.
+% PyTuple_GetItem returns BORROWED references, so no decref needed.
+%
+collect_tuple_items(_, Index, Size, []) :-
+    Index >= Size, !.
+collect_tuple_items(PyTuple, Index, Size, [Head|Tail]) :-
+    Index < Size,
+    ffi:'PyTuple_GetItem'(PyTuple, Index, PyItem),
+    (   PyItem = 0
+    ->  fail  % Error getting item
+    ;   % Try to get size to check if it's a tuple or list
+        ffi:'PyTuple_Size'(PyItem, _TupleSize),
+        ffi:'PyErr_Occurred'(Err1),
+        (   Err1 = 0
+        ->  % It's a tuple, recursively convert
+            py_tuple_to_prolog(PyItem, Head)
+        ;   % Not a tuple, clear error and check if it's a list
+            ffi:'PyErr_Clear',
+            ffi:'PyList_Size'(PyItem, _ListSize),
+            ffi:'PyErr_Occurred'(Err2),
+            (   Err2 = 0
+            ->  % It's a list, recursively convert
+                py_list_to_prolog(PyItem, Head)
+            ;   % Not a tuple or list, convert to Prolog value
+                ffi:'PyErr_Clear',
+                pyobject_to_prolog_value(PyItem, Head)
+            )
+        )
+    ),
+    NextIndex is Index + 1,
+    collect_tuple_items(PyTuple, NextIndex, Size, Tail).
 
 %% ============================================
 %% Extended py_run_simple_string with globals/locals
