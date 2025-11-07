@@ -2,6 +2,8 @@ FROM ubuntu:22.04
 
 # Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -35,8 +37,8 @@ RUN git clone https://github.com/jjtolton/scryer-prolog.git && \
 # Create working directory
 WORKDIR /app
 
-# Copy library source
-COPY src/ /app/src/
+# Copy library source from project root
+COPY ../../src/ /app/src/
 
 # Create a virtual environment and install Python packages
 RUN uv venv && \
@@ -45,6 +47,7 @@ RUN uv venv && \
 # Create a demo script
 RUN cat > /app/demo.pl << 'EOF'
 :- use_module(library(os)).
+:- use_module(library(lists)).
 :- use_module('src/lib/python').
 :- initialization(main).
 
@@ -68,10 +71,11 @@ main :-
     py_run_simple_string("print(f'Requests version: {requests.__version__}')"),
     py_run_simple_string("print()"),
 
-    py_run_simple_string("response = requests.get('https://api.github.com/repos/jjtolton/scrypy')"),
-    py_run_simple_string("print(f'ScryPy GitHub stars: {response.json()[\"stargazers_count\"]}')"),
+    py_run_simple_string("import math"),
+    py_run_simple_string("result = math.sqrt(16) + math.pi"),
+    py_run_simple_string("print(f'Math demo: sqrt(16) + pi = {result:.4f}')"),
     py_run_simple_string("print()"),
-    py_run_simple_string("print('🎉 ScryPy Docker Demo: SUCCESS!')"),
+    py_run_simple_string("print('ScryPy Docker Demo: SUCCESS!')"),
 
     py_finalize,
     halt.

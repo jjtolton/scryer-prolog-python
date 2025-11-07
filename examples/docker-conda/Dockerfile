@@ -2,6 +2,8 @@ FROM ubuntu:22.04
 
 # Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -40,31 +42,19 @@ RUN git clone --branch rtld-global-support https://github.com/jjtolton/scryer-pr
 # Create working directory
 WORKDIR /app
 
-# Copy library source
-COPY src/ /app/src/
-
-# Find the conda environment's Python version dynamically
-RUN PYTHON_VERSION=$(conda run -n myenv python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')") && \
-    echo "PYTHON_VERSION=$PYTHON_VERSION" > /app/conda_env.sh
+# Copy library source from project root
+COPY ../../src/ /app/src/
 
 # Create a demo script
 RUN cat > /app/demo.pl << 'EOF'
-:- use_module(library(os)).
 :- use_module(library(lists)).
 :- use_module('src/lib/python').
 :- initialization(main).
 
 main :-
-    % Find Python version from conda env
-    getenv("PYTHON_VERSION", PyVerStr),
-    atom_chars(PyVerAtom, PyVerStr),
-
-    % Build paths
-    atom_concat('/opt/conda/envs/myenv/lib/libpython', PyVerAtom, LibPrefix),
-    atom_concat(LibPrefix, '.so', LibPath),
-
+    % Use Python 3.11 from conda environment
     py_initialize([
-        shared_library_path(LibPath),
+        shared_library_path('/opt/conda/envs/myenv/lib/libpython3.11.so'),
         python_executable('/opt/conda/envs/myenv/bin/python')
     ]),
 
@@ -80,11 +70,11 @@ main :-
     py_run_simple_string("print(f'NumPy array sum: {arr.sum()}')"),
     py_run_simple_string("print()"),
 
-    py_run_simple_string("print('🎉 ScryPy + Conda + NumPy: SUCCESS!')"),
+    py_run_simple_string("print('ScryPy + Conda + NumPy: SUCCESS!')"),
 
     py_finalize,
     halt.
 EOF
 
-# Source conda env variables at runtime
-CMD ["/bin/bash", "-c", "source /app/conda_env.sh && scryer-prolog demo.pl"]
+# Default command
+CMD ["scryer-prolog", "demo.pl"]
