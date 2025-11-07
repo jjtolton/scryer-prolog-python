@@ -13,15 +13,19 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.11'
-
-    - name: Install Python development libraries
+    - name: Install system dependencies for Python
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3.11-dev libpython3.11
+        sudo apt-get install -y software-properties-common
+
+    - name: Add deadsnakes PPA for Python 3.11
+      run: |
+        sudo add-apt-repository ppa:deadsnakes/ppa -y
+        sudo apt-get update
+
+    - name: Install Python 3.11 with dev libraries
+      run: |
+        sudo apt-get install -y python3.11 python3.11-dev libpython3.11 libpython3.11-dev
 
     - name: Install Rust
       uses: actions-rs/toolchain@v1
