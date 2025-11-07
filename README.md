@@ -2,7 +2,7 @@
 
 **Scryer Prolog + Python Integration**
 
-**Version: 0.3.0** (Pre-release / Alpha)
+**Version: 0.4.0-alpha** (Pre-release / Alpha)
 
 ---
 
@@ -57,6 +57,13 @@ Unlike libpython-clj which creates one Python instance per process, this library
 - ✅ **Globals/Locals Support**: Execute Python with custom variable scopes
 - ✅ **Value Extraction**: Get computed values back from Python into Prolog
 - ✅ **Dict ↔ List Conversion**: Convert between Python dicts and Prolog key-value lists
+
+### Version 0.4.0 Features (Phase 1 - Type Bridging)
+- ✅ **Python None**: Get None singleton, None checking, bidirectional conversion
+- ✅ **Python Lists**: Create, read, update, append, bidirectional conversion with nested support
+- ✅ **Python Tuples**: Create, read, bidirectional conversion with nested support
+- ✅ **Memory Management**: Proper handling of BORROWED, STOLEN, and NEW references
+- ✅ **Nested Structures**: Full support for nested lists/tuples
 
 ## Installation
 
@@ -116,6 +123,8 @@ The library automatically detects which Python version is installed and uses the
 
 ## Quick Start
 
+### Basic Python Execution
+
 ```prolog
 ?- use_module('src/lib/python').
 true.
@@ -123,16 +132,42 @@ true.
 ?- py_initialize.
 true.
 
-?- py_run_simple_string('print("Hello from Python!")').
+?- py_run_simple_string("print('Hello from Python!')").
 Hello from Python!
 true.
 
-?- py_run_simple_string('x = 42').
+?- py_run_simple_string("x = 42").
 true.
 
-?- py_run_simple_string('print(f"The answer is {x}")').
+?- py_run_simple_string("print(f'The answer is {x}')").
 The answer is 42
 true.
+
+?- py_finalize.
+true.
+```
+
+### Working with Python Types (v0.4.0)
+
+```prolog
+?- py_initialize.
+true.
+
+% Python None
+?- py_none(N), py_none_check(N), py_xdecref(N).
+true.
+
+% Python Lists
+?- py_list_from_prolog([1, 2, 3], L),
+   py_list_get(L, 1, Item),
+   py_xdecref(L).
+Item = 2.
+
+% Python Tuples
+?- py_tuple_from_prolog([a, b, c], T),
+   py_tuple_size(T, Size),
+   py_xdecref(T).
+Size = 3.
 
 ?- py_finalize.
 true.
@@ -217,8 +252,12 @@ Set a key-value pair in a Python dictionary.
 ```prolog
 ?- py_dict_new(Dict),
    py_dict_set(Dict, name, 'Alice'),
-   py_dict_set(Dict, age, 30).
+   py_dict_set(Dict, age, 30),
+   py_xdecref(Dict).
+true.
 ```
+
+**Note**: Dictionary pointers are NEW references and must be cleaned up with `py_xdecref/1` when done.
 
 #### `py_dict_get(+DictPtr, +Key, -Value)`
 
@@ -266,6 +305,117 @@ Convert a Prolog list of Key-Value pairs to a Python dictionary.
 
 Alias for `py_dict_to_list/2`.
 
+### Phase 1 Type Bridging (v0.4.0)
+
+#### Python None
+
+##### `py_none(-PyNone)`
+
+Get the Python None singleton.
+
+**Returns**: NEW reference - must call `py_xdecref(PyNone)` when done.
+
+```prolog
+?- py_none(N), py_xdecref(N).
+true.
+```
+
+##### `py_none_check(+PyObject)`
+
+Check if a Python object is None.
+
+```prolog
+?- py_none(N), py_none_check(N), py_xdecref(N).
+true.
+```
+
+#### Python Lists
+
+##### `py_list_new(-PyList)`
+
+Create a new empty Python list.
+
+**Returns**: NEW reference - must call `py_xdecref(PyList)` when done.
+
+##### `py_list_from_prolog(+PrologList, -PyList)`
+
+Convert a Prolog list to a Python list. Supports nested lists.
+
+```prolog
+?- py_list_from_prolog([1, [2, 3], 4], L),
+   py_list_to_prolog(L, Result),
+   py_xdecref(L).
+Result = [1, [2, 3], 4].
+```
+
+##### `py_list_to_prolog(+PyList, -PrologList)`
+
+Convert a Python list to a Prolog list. Supports nested lists.
+
+##### `py_list_size(+PyList, -Size)`
+
+Get the size of a Python list.
+
+##### `py_list_get(+PyList, +Index, -Value)`
+
+Get an item from a Python list by index (0-based).
+
+##### `py_list_set(+PyList, +Index, +Value)`
+
+Set an item in a Python list by index.
+
+##### `py_list_append(+PyList, +Value)`
+
+Append a value to the end of a Python list.
+
+#### Python Tuples
+
+##### `py_tuple_new(+Size, -PyTuple)`
+
+Create a new Python tuple with the specified size.
+
+**Returns**: NEW reference - must call `py_xdecref(PyTuple)` when done.
+
+##### `py_tuple_from_prolog(+PrologList, -PyTuple)`
+
+Convert a Prolog list to a Python tuple. Supports nested structures.
+
+```prolog
+?- py_tuple_from_prolog([1, 2, 3], T),
+   py_tuple_size(T, Size),
+   py_xdecref(T).
+Size = 3.
+```
+
+##### `py_tuple_to_prolog(+PyTuple, -PrologList)`
+
+Convert a Python tuple to a Prolog list. Supports nested structures.
+
+##### `py_tuple_size(+PyTuple, -Size)`
+
+Get the size of a Python tuple.
+
+##### `py_tuple_get(+PyTuple, +Index, -Value)`
+
+Get an item from a Python tuple by index (0-based).
+
+**Note**: Tuples are immutable - no set or append operations.
+
+#### Memory Management
+
+All Python object creation predicates return NEW references that must be cleaned up:
+
+```prolog
+% Good - cleanup with py_xdecref
+?- py_list_new(L),
+   py_list_append(L, 42),
+   py_xdecref(L).
+
+% Bad - memory leak
+?- py_list_new(L),
+   py_list_append(L, 42).
+```
+
 ## Examples
 
 ### Basic Demo (v0.1.0)
@@ -283,8 +433,19 @@ scryer-prolog examples/python_demo_v2.pl
 ```
 
 ### Test Suite
-Run the comprehensive test suite:
 
+**Phase 1 Tests (v0.4.0)**:
+```bash
+# Unit tests
+scryer-prolog tests/unit/test_py_none_simple.pl       # Python None (5/5 tests)
+scryer-prolog tests/unit/test_py_list_simple.pl       # Python Lists (7/7 tests)
+scryer-prolog tests/unit/test_py_tuple_simple.pl      # Python Tuples (6/6 tests)
+
+# Integration tests
+scryer-prolog tests/integration/test_phase1_types.pl   # All Phase 1 types (5/5 tests)
+```
+
+**Legacy Tests (v0.2.0)**:
 ```bash
 scryer-prolog examples/tests/test_all_types.pl          # Type conversion tests
 scryer-prolog examples/tests/test_dict_to_list.pl       # Dictionary conversion tests
@@ -315,9 +476,18 @@ The library uses Scryer Prolog's FFI to call Python C API functions directly, wi
 - `PyUnicode_FromString(str)`, `PyUnicode_AsUTF8(obj)`: String conversion
 - `PyObject_IsTrue(obj)`: Boolean conversion
 
-### List Operations
+### List Operations (v0.4.0)
+- `PyList_New(size)`: Create new list
 - `PyList_Size(list)`: Get list length
-- `PyList_GetItem(list, index)`: Get item at index
+- `PyList_GetItem(list, index)`: Get item at index (BORROWED reference)
+- `PyList_SetItem(list, index, item)`: Set item (STEALS reference)
+- `PyList_Append(list, item)`: Append item (does NOT steal)
+
+### Tuple Operations (v0.4.0)
+- `PyTuple_New(size)`: Create new tuple
+- `PyTuple_Size(tuple)`: Get tuple length
+- `PyTuple_GetItem(tuple, index)`: Get item at index (BORROWED reference)
+- `PyTuple_SetItem(tuple, index, item)`: Set item during construction (STEALS reference)
 
 ### Error Handling
 - `PyErr_Occurred()`: Check if error occurred
