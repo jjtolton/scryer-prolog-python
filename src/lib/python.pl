@@ -13,6 +13,14 @@
     % Python None support
     py_none/1,
     py_none_check/1,
+    % Python List support
+    py_list_new/1,
+    py_list_size/2,
+    py_list_get/3,
+    py_list_set/3,
+    py_list_append/2,
+    py_list_from_prolog/2,
+    py_list_to_prolog/2,
     % Type conversion
     prolog_value_to_pyobject/2,
     pyobject_to_prolog_value/2,
@@ -118,6 +126,7 @@ This implementation is inspired by:
 :- use_module(library(iso_ext)).
 :- use_module(library(files)).
 :- use_module(library(os)).
+:- use_module(library(lists)).
 
 %% Multifile hooks for python.pl configuration
 %%
@@ -472,9 +481,12 @@ load_python_library_once :-
         'PyErr_Occurred'([], ptr),  % Check if an error occurred
         'PyErr_Clear'([], void),    % Clear the error
 
-        % List operations (for iterating dict keys)
-        'PyList_Size'([ptr], long),
-        'PyList_GetItem'([ptr, long], ptr),
+        % List operations
+        'PyList_New'([long], ptr),          % Create new list
+        'PyList_Size'([ptr], long),         % Get list size
+        'PyList_GetItem'([ptr, long], ptr), % Get item (BORROWED ref)
+        'PyList_SetItem'([ptr, long, ptr], int), % Set item (STEALS ref)
+        'PyList_Append'([ptr, ptr], int),   % Append item (does NOT steal)
 
         % Module operations (for py_run_simple_string/5)
         'PyImport_AddModule'([cstr], ptr),
@@ -739,6 +751,189 @@ py_none_check(PyObject) :-
     is_python_initialized,
     python_state_get(py_none_singleton, CachedNone),
     PyObject = CachedNone.
+
+%% ============================================
+%% Python List Support (Version 0.4.0 Phase 1)
+%% ============================================
+
+%% py_list_new(-PyList)
+%
+% Create a new empty Python list.
+% MEMORY: Returns a NEW reference - caller must py_xdecref(PyList) when done!
+%
+% Example:
+% ```prolog
+% ?- py_list_new(L), py_list_size(L, Size), py_xdecref(L).
+% Size = 0.
+% ```
+%
+py_list_new(PyList) :-
+    is_python_initialized,
+    ffi:'PyList_New'(0, PyList).
+
+%% py_list_size(+PyList, -Size)
+%
+% Get the size of a Python list.
+%
+% Example:
+% ```prolog
+% ?- py_list_from_prolog([1,2,3], L), py_list_size(L, Size), py_xdecref(L).
+% Size = 3.
+% ```
+%
+py_list_size(PyList, Size) :-
+    is_python_initialized,
+    ffi:'PyList_Size'(PyList, Size).
+
+%% py_list_get(+PyList, +Index, -Value)
+%
+% Get an item from a Python list by index (0-based).
+% Returns the Prolog value, not the PyObject pointer.
+%
+% Note: PyList_GetItem returns a BORROWED reference, so we don't decref.
+%
+% Example:
+% ```prolog
+% ?- py_list_from_prolog([10,20,30], L), py_list_get(L, 1, V), py_xdecref(L).
+% V = 20.
+% ```
+%
+py_list_get(PyList, Index, Value) :-
+    is_python_initialized,
+    ffi:'PyList_GetItem'(PyList, Index, PyItem),
+    (PyItem = 0 ->
+        fail  % Index out of bounds or error
+    ;
+        pyobject_to_prolog_value(PyItem, Value)
+    ).
+
+%% py_list_set(+PyList, +Index, +Value)
+%
+% Set an item in a Python list by index (0-based).
+% The list must already have an item at this index (use py_list_append for new items).
+%
+% Note: PyList_SetItem STEALS a reference, so we don't decref the converted value.
+%
+% Example:
+% ```prolog
+% ?- py_list_from_prolog([1,2,3], L), py_list_set(L, 1, 99), py_list_get(L, 1, V), py_xdecref(L).
+% V = 99.
+% ```
+%
+py_list_set(PyList, Index, Value) :-
+    is_python_initialized,
+    prolog_value_to_pyobject(Value, PyValue),
+    ffi:'PyList_SetItem'(PyList, Index, PyValue, Result),
+    (Result = 0 ->
+        true
+    ;
+        throw(error(python_error(list_set_failed), py_list_set/3))
+    ).
+
+%% py_list_append(+PyList, +Value)
+%
+% Append a value to the end of a Python list.
+%
+% Note: PyList_Append does NOT steal a reference, so we must decref.
+%
+% Example:
+% ```prolog
+% ?- py_list_new(L), py_list_append(L, 42), py_list_size(L, S), py_xdecref(L).
+% S = 1.
+% ```
+%
+py_list_append(PyList, Value) :-
+    is_python_initialized,
+    prolog_value_to_pyobject(Value, PyValue),
+    setup_call_cleanup(
+        true,
+        (ffi:'PyList_Append'(PyList, PyValue, Result),
+         (Result = 0 -> true ; throw(error(python_error(list_append_failed), py_list_append/2)))),
+        py_xdecref(PyValue)
+    ).
+
+%% py_list_from_prolog(+PrologList, -PyList)
+%
+% Convert a Prolog list to a Python list.
+% Recursively converts nested lists.
+%
+% MEMORY: Returns a NEW reference - caller must py_xdecref(PyList) when done!
+%
+% Example:
+% ```prolog
+% ?- py_list_from_prolog([1,2,3], L), py_list_to_prolog(L, R), py_xdecref(L).
+% R = [1,2,3].
+% ```
+%
+py_list_from_prolog(PrologList, PyList) :-
+    is_python_initialized,
+    must_be(list, PrologList),
+    length(PrologList, Len),
+    ffi:'PyList_New'(Len, PyList),
+    fill_py_list(PyList, 0, PrologList).
+
+%% fill_py_list(+PyList, +Index, +PrologList)
+%
+% Helper predicate to fill a Python list from a Prolog list.
+% Uses PyList_SetItem which STEALS references.
+%
+fill_py_list(_, _, []).
+fill_py_list(PyList, Index, [Head|Tail]) :-
+    % Check if Head is a list by attempting to unify with list pattern
+    (   Head = [_|_]  % Non-empty list
+    ->  py_list_from_prolog(Head, PySubList),
+        ffi:'PyList_SetItem'(PyList, Index, PySubList, _)
+    ;   Head = []  % Empty list
+    ->  py_list_from_prolog(Head, PySubList),
+        ffi:'PyList_SetItem'(PyList, Index, PySubList, _)
+    ;   % Scalar value
+        prolog_value_to_pyobject(Head, PyValue),
+        ffi:'PyList_SetItem'(PyList, Index, PyValue, _)
+    ),
+    NextIndex is Index + 1,
+    fill_py_list(PyList, NextIndex, Tail).
+
+%% py_list_to_prolog(+PyList, -PrologList)
+%
+% Convert a Python list to a Prolog list.
+% Recursively converts nested lists.
+%
+% Example:
+% ```prolog
+% ?- py_list_from_prolog([1,[2,3],4], L), py_list_to_prolog(L, R), py_xdecref(L).
+% R = [1,[2,3],4].
+% ```
+%
+py_list_to_prolog(PyList, PrologList) :-
+    is_python_initialized,
+    py_list_size(PyList, Size),
+    collect_list_items(PyList, 0, Size, PrologList).
+
+%% collect_list_items(+PyList, +Index, +Size, -Items)
+%
+% Helper predicate to collect items from a Python list.
+% PyList_GetItem returns BORROWED references, so no decref needed.
+%
+collect_list_items(_, Index, Size, []) :-
+    Index >= Size, !.
+collect_list_items(PyList, Index, Size, [Head|Tail]) :-
+    Index < Size,
+    ffi:'PyList_GetItem'(PyList, Index, PyItem),
+    (   PyItem = 0
+    ->  fail  % Error getting item
+    ;   % Try to get size to check if it's a list
+        ffi:'PyList_Size'(PyItem, _SubSize),
+        ffi:'PyErr_Occurred'(Err),
+        (   Err = 0
+        ->  % It's a list, recursively convert
+            py_list_to_prolog(PyItem, Head)
+        ;   % Not a list, clear error and convert to Prolog value
+            ffi:'PyErr_Clear',
+            pyobject_to_prolog_value(PyItem, Head)
+        )
+    ),
+    NextIndex is Index + 1,
+    collect_list_items(PyList, NextIndex, Size, Tail).
 
 %% ============================================
 %% Extended py_run_simple_string with globals/locals
