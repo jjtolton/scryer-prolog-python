@@ -62,17 +62,17 @@
 % Examples:
 %
 % % Conda environment
-% python_home('/home/user/miniconda3/envs/myenv').
+% python_home("/home/user/miniconda3/envs/myenv").
 %
 % % pyenv installation
-% python_home('/home/user/.pyenv/versions/3.11.5').
+% python_home("/home/user/.pyenv/versions/3.11.5").
 %
 % % System Python
-% python_home('/usr').
+% python_home("/usr").
 %
 % Uncomment and modify:
 %
-% python_home('/path/to/python/home').
+% python_home("/path/to/python/home").
 
 %% python_executable(-Path)
 %
@@ -82,14 +82,14 @@
 % Examples:
 %
 % % Conda environment
-% python_executable('/home/user/miniconda3/envs/myenv/bin/python').
+% python_executable("/home/user/miniconda3/envs/myenv/bin/python").
 %
 % % pyenv installation
-% python_executable('/home/user/.pyenv/versions/3.11.5/bin/python').
+% python_executable("/home/user/.pyenv/versions/3.11.5/bin/python").
 %
 % Uncomment and modify:
 %
-% python_executable('/path/to/python').
+% python_executable("/path/to/python").
 
 %% python_verbose(+Boolean)
 %
