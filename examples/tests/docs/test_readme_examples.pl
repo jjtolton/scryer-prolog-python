@@ -38,9 +38,9 @@ test_quick_start :-
     format("Test: Quick Start Example~n", []),
     catch((
         py_initialize,
-        py_run_simple_string("print(\"Hello from Python!\")",
-        py_run_simple_string("x = 42",
-        py_run_simple_string("print(f\"The answer is {x}\")",
+        py_run_simple_string("print('Hello from Python!')"),
+        py_run_simple_string("x = 42"),
+        py_run_simple_string("print(f'The answer is {x}')"),
         py_finalize,
         pass('Quick Start')
     ), Error, (
@@ -52,8 +52,8 @@ test_simple_execution :-
     format("Test: Simple Code Execution~n", []),
     catch((
         py_initialize,
-        py_run_simple_string("x = 10",
-        py_run_simple_string("print(x * 2)",
+        py_run_simple_string("x = 10"),
+        py_run_simple_string("print(x * 2)"),
         py_finalize,
         pass('Simple Execution')
     ), Error, (
@@ -83,6 +83,7 @@ test_dictionary_operations :-
         py_dict_set(Dict, name, 'Alice'),
         py_dict_set(Dict, age, 30),
         py_dict_get(Dict, name, Name),
+        py_xdecref(Dict),
         (Name = 'Alice' ->
             pass('Dictionary Operations')
         ;   fail_test('Dictionary Operations', 'Name not Alice')),
@@ -100,6 +101,7 @@ test_dict_to_list :-
         py_dict_set(Dict, name, 'Alice'),
         py_dict_set(Dict, age, 30),
         py_dict_to_list(Dict, List),
+        py_xdecref(Dict),
         (member(name-'Alice', List), member(age-30, List) ->
             pass('Dict to List')
         ;   fail_test('Dict to List', 'Expected keys not in list')),
@@ -115,6 +117,7 @@ test_prolog_to_py_dict :-
         py_initialize,
         prolog_to_py_dict([x-10, y-20], Dict),
         py_dict_get(Dict, x, X),
+        py_xdecref(Dict),
         (X = 10 ->
             pass('Prolog to Python Dict')
         ;   fail_test('Prolog to Python Dict', 'X not 10')),
