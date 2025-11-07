@@ -368,10 +368,16 @@ py_finalize :-
 % ```
 %
 py_run_simple_string(Code) :-
-    (atom(Code) -> atom_chars(Code, CodeChars) ; CodeChars = Code),
-    must_be(chars, CodeChars),
+    % Enforce strings (double quotes) only - reject atoms (single quotes)
+    (   atom(Code)
+    ->  throw(error(type_error(string, Code),
+            context(py_run_simple_string/1,
+                    'Python code must use double quotes (strings), not single quotes (atoms). Use "code" not ''code''.')))
+    ;   true
+    ),
+    must_be(chars, Code),
     (   is_python_initialized
-    ->  ffi:'PyRun_SimpleString'(CodeChars, Result),
+    ->  ffi:'PyRun_SimpleString'(Code, Result),
         (Result = 0 -> true ; throw(error(python_error(Result), py_run_simple_string/1)))
     ;   throw(error(existence_error(python_interpreter, not_initialized), py_run_simple_string/1))
     ).
@@ -1124,8 +1130,14 @@ collect_tuple_items(PyTuple, Index, Size, [Head|Tail]) :-
 % ```
 %
 py_run_simple_string(Code, GlobalsIn, LocalsIn, GlobalsOut, LocalsOut) :-
-    (atom(Code) -> atom_chars(Code, CodeChars) ; CodeChars = Code),
-    must_be(chars, CodeChars),
+    % Enforce strings (double quotes) only - reject atoms (single quotes)
+    (   atom(Code)
+    ->  throw(error(type_error(string, Code),
+            context(py_run_simple_string/5,
+                    'Python code must use double quotes (strings), not single quotes (atoms). Use "code" not ''code''.')))
+    ;   true
+    ),
+    must_be(chars, Code),
     must_be(list, GlobalsIn),
     must_be(list, LocalsIn),
     is_python_initialized,
@@ -1156,7 +1168,7 @@ py_run_simple_string(Code, GlobalsIn, LocalsIn, GlobalsOut, LocalsOut) :-
     % Execute code and ensure cleanup
     setup_call_cleanup(
         % Execute: PyRun_String(code, Py_file_input=257, globals, locals)
-        ffi:'PyRun_String'(CodeChars, 257, GlobalsDict, LocalsDict, ResultPtr),
+        ffi:'PyRun_String'(Code, 257, GlobalsDict, LocalsDict, ResultPtr),
         % Process results
         (ResultPtr = 0 ->
             throw(error(python_error(execution_failed), py_run_simple_string/5))

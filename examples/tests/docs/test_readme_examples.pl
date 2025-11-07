@@ -65,7 +65,7 @@ test_globals_locals :-
     format("Test: Globals/Locals~n", []),
     catch((
         py_initialize,
-        py_run_simple_string('result = x + y', [x-10, y-20], [], Globals, _),
+        py_run_simple_string("result = x + y", [x-10, y-20], [], Globals, _),
         (member(result-30, Globals) ->
             pass('Globals/Locals')
         ;   fail_test('Globals/Locals', 'result-30 not in Globals')),
