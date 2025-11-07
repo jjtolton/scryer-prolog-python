@@ -296,9 +296,211 @@ test_list_roundtrip :-
    - Remember: tuples are immutable!
    - Write 13 unit tests
 
+## Concrete Implementation Examples from libpython-clj Source
+
+### Creating Python List from Clojure Vector
+
+From `src/libpython_clj2/python/copy.clj`:
+```clojure
+(defn ->py-list
+  "Copy an object into a new python list."
+  [item-seq]
+  (py-ffi/check-gil)
+  (let [item-seq (vec item-seq)
+        retval (py-ffi/PyList_New (count item-seq))]
+    (pygc/with-stack-context
+      (dotimes [idx (count item-seq)]
+        (let [si-retval
+              ;;setitem does steal the reference
+              (py-ffi/PyList_SetItem
+               retval
+               idx
+               (py-ffi/untracked->python (item-seq idx) py-base/->python))]
+          (when-not (== 0 (long si-retval))
+            (py-ffi/check-error-throw)))))
+    (py-ffi/track-pyobject retval)))
+```
+
+**Key points**:
+- `PyList_New` creates list with size
+- `PyList_SetItem` STEALS the reference (no decref needed)
+- Error checking after each SetItem
+- Final `track-pyobject` binds to JVM GC
+
+**ScryPy equivalent**:
+```prolog
+py_list_from_prolog(PrologList, PyList) :-
+    length(PrologList, Len),
+    ffi:'PyList_New'(Len, PyList),
+    setup_call_cleanup(
+        true,
+        fill_py_list(PyList, 0, PrologList),
+        true  % PyList owned by caller
+    ).
+
+fill_py_list(_, _, []) :- !.
+fill_py_list(PyList, Idx, [H|T]) :-
+    prolog_value_to_pyobject(H, PyValue),
+    % PyList_SetItem STEALS reference - don't decref PyValue!
+    ffi:'PyList_SetItem'(PyList, Idx, PyValue, Result),
+    (Result = 0 -> true ; throw(error(python_error, 'PyList_SetItem failed'))),
+    Idx1 is Idx + 1,
+    fill_py_list(PyList, Idx1, T).
+```
+
+### Creating Python Tuple
+
+From `src/libpython_clj2/python/ffi.clj`:
+```clojure
+(defn untracked-tuple
+  "Low-level make tuple fn.  Returns an untracked python tuple."
+  [args & [conv-fallback]]
+  (check-gil)
+  (let [args (vec args)
+        argcount (count args)
+        tuple (PyTuple_New argcount)]
+    (dotimes [idx argcount]
+      (PyTuple_SetItem tuple idx (untracked->python (args idx)
+                                                    conv-fallback)))
+    tuple))
+```
+
+**ScryPy equivalent**:
+```prolog
+py_tuple_from_prolog(PrologList, PyTuple) :-
+    length(PrologList, Len),
+    ffi:'PyTuple_New'(Len, PyTuple),
+    setup_call_cleanup(
+        true,
+        fill_py_tuple(PyTuple, 0, PrologList),
+        true  % PyTuple owned by caller
+    ).
+
+fill_py_tuple(_, _, []) :- !.
+fill_py_tuple(PyTuple, Idx, [H|T]) :-
+    prolog_value_to_pyobject(H, PyValue),
+    % PyTuple_SetItem STEALS reference during init
+    ffi:'PyTuple_SetItem'(PyTuple, Idx, PyValue, Result),
+    (Result = 0 -> true ; throw(error(python_error, 'PyTuple_SetItem failed'))),
+    Idx1 is Idx + 1,
+    fill_py_tuple(PyTuple, Idx1, T).
+```
+
+### Converting Python Tuple to Clojure Vector
+
+From `src/libpython_clj2/python/copy.clj`:
+```clojure
+(defmethod py-proto/pyobject->jvm :tuple
+  [pyobj & [options]]
+  (let [n-elems (py-ffi/PyTuple_Size pyobj)]
+    (mapv (fn [^long idx]
+            (py-base/->jvm (py-ffi/PyTuple_GetItem pyobj idx)))
+          (range n-elems))))
+```
+
+**Key points**:
+- Get size first
+- `PyTuple_GetItem` returns BORROWED reference
+- Convert each element recursively
+- No explicit decref needed (borrowed references)
+
+**ScryPy equivalent**:
+```prolog
+py_tuple_to_prolog(PyTuple, PrologList) :-
+    ffi:'PyTuple_Size'(PyTuple, Size),
+    collect_tuple_items(PyTuple, 0, Size, [], PrologList).
+
+collect_tuple_items(_, Size, Size, Acc, Result) :- !,
+    reverse(Acc, Result).
+collect_tuple_items(PyTuple, Idx, Size, Acc, Result) :-
+    ffi:'PyTuple_GetItem'(PyTuple, Idx, PyItem),  % BORROWED
+    pyobject_to_prolog_value(PyItem, Value),
+    Idx1 is Idx + 1,
+    collect_tuple_items(PyTuple, Idx1, Size, [Value|Acc], Result).
+```
+
+### Converting Python List to Clojure Vector
+
+From `src/libpython_clj2/python/copy.clj`:
+```clojure
+(defn python->jvm-copy-persistent-vector
+  [pyobj]
+  (when-not (= 1 (py-ffi/PySequence_Check pyobj))
+    (errors/throwf "Object does not implement sequence protocol: %s"
+                   (py-proto/python-type pyobj)))
+  (try
+    (->> (range (py-ffi/with-error-check (py-ffi/PySequence_Length pyobj)))
+         (mapv (fn [idx]
+                 (let [pyitem (py-ffi/PySequence_GetItem pyobj idx)]
+                   (try
+                     (py-base/->jvm pyitem)
+                     (finally
+                       (py-ffi/Py_DecRef pyitem)))))))
+    (catch Throwable e [])))
+```
+
+**Key point**: `PySequence_GetItem` returns NEW reference (must decref!)
+
+**ScryPy equivalent** (using PyList_GetItem which is BORROWED):
+```prolog
+py_list_to_prolog(PyList, PrologList) :-
+    ffi:'PyList_Size'(PyList, Size),
+    collect_list_items(PyList, 0, Size, [], PrologList).
+
+collect_list_items(_, Size, Size, Acc, Result) :- !,
+    reverse(Acc, Result).
+collect_list_items(PyList, Idx, Size, Acc, Result) :-
+    ffi:'PyList_GetItem'(PyList, Idx, PyItem),  % BORROWED
+    pyobject_to_prolog_value(PyItem, Value),
+    Idx1 is Idx + 1,
+    collect_list_items(PyList, Idx1, Size, [Value|Acc], Result).
+```
+
+### Handling None
+
+From `src/libpython_clj2/python/copy.clj`:
+```clojure
+(defmethod py-proto/pyobject->jvm :default
+  [pyobj & [options]]
+  (let [python-type-keyword (py-ffi/pyobject-type-kwd pyobj)]
+    (cond
+      (= :none-type python-type-keyword)
+      nil
+      ...)))
+```
+
+And from `src/libpython_clj2/python/ffi.clj`:
+```clojure
+(define-static-symbol py-none "_Py_NoneStruct" false)
+
+;; Usage:
+(nil? item) (incref (py-none))
+```
+
+**ScryPy equivalent**:
+```prolog
+% Get None singleton
+py_none(PyNone) :-
+    ffi:'_Py_NoneStruct'(PyNone),
+    py_incref(PyNone).  % Must incref if keeping!
+
+% Check if object is None
+py_none_check(PyObject) :-
+    ffi:'_Py_NoneStruct'(PyNone),
+    PyObject = PyNone.
+
+% Convert in type conversion
+pyobject_to_prolog_value(PyObject, none) :-
+    py_none_check(PyObject), !.
+
+prolog_value_to_pyobject(none, PyNone) :- !,
+    py_none(PyNone).
+```
+
 ## References
 
 - [libpython-clj GitHub](https://github.com/clj-python/libpython-clj)
+- Local copy: `../scryer-prolog-python/libpython-clj/`
 - [Python C API - None](https://docs.python.org/3/c-api/none.html)
 - [Python C API - List](https://docs.python.org/3/c-api/list.html)
 - [Python C API - Tuple](https://docs.python.org/3/c-api/tuple.html)
