@@ -10,6 +10,12 @@
     py_dict_to_list/2,
     prolog_to_py_dict/2,
     py_dict_to_prolog/2,
+    % Python None support
+    py_none/1,
+    py_none_check/1,
+    % Type conversion
+    prolog_value_to_pyobject/2,
+    pyobject_to_prolog_value/2,
     % Reference counting (memory management)
     py_incref/1,
     py_decref/1,
@@ -222,7 +228,8 @@ py_initialize :-
     ->  throw(error(permission_error(create, python_interpreter, already_initialized), py_initialize/0))
     ;   load_python_library_once,
         ffi:'Py_Initialize',
-        mark_python_initialized
+        mark_python_initialized,
+        cache_python_none_singleton
     ).
 
 %% py_initialize(+Options)
@@ -256,7 +263,8 @@ py_initialize(Options) :-
         load_python_library_once,
         apply_python_home,
         ffi:'Py_Initialize',
-        mark_python_initialized
+        mark_python_initialized,
+        cache_python_none_singleton
     ).
 
 %% process_init_options(+Options)
@@ -314,7 +322,8 @@ apply_python_home :-
 %
 py_finalize :-
     (   is_python_initialized
-    ->  ffi:'Py_Finalize',
+    ->  clear_python_none_singleton,
+        ffi:'Py_Finalize',
         mark_python_finalized
     ;   throw(error(existence_error(python_interpreter, not_initialized), py_finalize/0))
     ).
@@ -606,10 +615,12 @@ py_dict_to_prolog(DictPtr, List) :-
 %% prolog_value_to_pyobject(+Value, -PyObject)
 %
 % Convert a Prolog value to a Python object pointer.
-% Supports: integers, floats, atoms (as strings)
+% Supports: none, integers, floats, atoms (as strings)
 %
 % MEMORY: Returns a NEW reference - caller must py_xdecref(PyObject) when done!
 %
+prolog_value_to_pyobject(none, PyObject) :- !,
+    py_none(PyObject).
 prolog_value_to_pyobject(Value, PyObject) :-
     integer(Value), !,
     ffi:'PyLong_FromLong'(Value, PyObject).
@@ -625,13 +636,16 @@ prolog_value_to_pyobject(Value, _) :-
 %% pyobject_to_prolog_value(+PyObject, -Value)
 %
 % Convert a Python object pointer to a Prolog value.
-% Supports: bool, int, float, str
+% Supports: none, bool, int, float, str
 %
 % Follows libpython-clj's approach:
 % 1. Get the type of the Python object
 % 2. Dispatch based on type
 % 3. Convert using appropriate Python C API function
 %
+pyobject_to_prolog_value(PyObject, none) :-
+    % Check for None first (most efficient check)
+    py_none_check(PyObject), !.
 pyobject_to_prolog_value(PyObject, Value) :-
     % Try-convert approach: attempt each conversion and check for errors
     % Python C API sets error state when conversion fails
@@ -661,6 +675,70 @@ pyobject_to_prolog_value(PyObject, Value) :-
             )
         )
     ).
+
+%% ============================================
+%% Python None Support (Version 0.4.0 Phase 1)
+%% ============================================
+
+%% cache_python_none_singleton
+%
+% Cache the Python None singleton during initialization.
+% Called automatically by py_initialize/0 and py_initialize/1.
+% INTERNAL PREDICATE - not exported.
+%
+cache_python_none_singleton :-
+    ffi:'PyImport_AddModule'("__main__", MainModule),
+    ffi:'PyModule_GetDict'(MainModule, Globals),
+    ffi:'PyRun_String'("None", 258, Globals, Globals, PyNone),
+    python_state_set(py_none_singleton, PyNone).
+
+%% clear_python_none_singleton
+%
+% Clear the cached Python None singleton and decref it.
+% Called automatically by py_finalize/0.
+% INTERNAL PREDICATE - not exported.
+%
+clear_python_none_singleton :-
+    (   catch(python_state_get(py_none_singleton, PyNone), _, fail)
+    ->  py_xdecref(PyNone),
+        python_state_set(py_none_singleton, 0)
+    ;   true
+    ).
+
+%% py_none(-PyNone)
+%
+% Get the Python None singleton with a new reference.
+% Uses cached None singleton from initialization for efficiency.
+% MEMORY: Returns a NEW reference - caller must py_xdecref(PyNone) when done!
+%
+% Example:
+% ```prolog
+% ?- py_none(N), py_none_check(N), py_xdecref(N).
+% true.
+% ```
+%
+py_none(PyNone) :-
+    is_python_initialized,
+    python_state_get(py_none_singleton, CachedNone),
+    py_incref(CachedNone),
+    PyNone = CachedNone.
+
+%% py_none_check(+PyObject)
+%
+% Check if a Python object is None.
+% Succeeds if PyObject is the None singleton, fails otherwise.
+% Uses cached None singleton for efficient comparison (no allocation).
+%
+% Example:
+% ```prolog
+% ?- py_none(N), py_none_check(N), py_xdecref(N).
+% true.
+% ```
+%
+py_none_check(PyObject) :-
+    is_python_initialized,
+    python_state_get(py_none_singleton, CachedNone),
+    PyObject = CachedNone.
 
 %% ============================================
 %% Extended py_run_simple_string with globals/locals
