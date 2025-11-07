@@ -114,7 +114,6 @@ libpython-clj/
 /src/variable_records.rs
 /src/wasm.rs
 /tests-pl/
-/tests/
 /tools/
 /wambook/
 .ediprolog-tmp
