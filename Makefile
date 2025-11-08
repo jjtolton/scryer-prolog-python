@@ -1,4 +1,4 @@
-.PHONY: all test test-unit test-phase1 test-examples test-ci clean deps help
+.PHONY: all test test-unit test-phase1 test-examples test-ci validate-docs clean deps help
 
 SCRYER := scryer-prolog --no-add-history
 
@@ -15,6 +15,7 @@ help:
 	@echo "  test-unit     - Run Phase 1 unit tests only"
 	@echo "  test-phase1   - Alias for test-unit"
 	@echo "  test-examples - Run example/smoke tests"
+	@echo "  validate-docs - Validate documentation and string/atom usage"
 	@echo "  test-ci       - Test CI workflow locally (Docker)"
 	@echo "  clean         - Remove generated files"
 	@echo "  deps          - Check/install dependencies"
@@ -54,6 +55,12 @@ test-examples: deps
 	@$(SCRYER) examples/tests/test_memory_management.pl
 	@echo ""
 	@echo "$(GREEN)✅ Example tests passed!$(NC)"
+
+validate-docs:
+	@echo "$(YELLOW)Validating documentation and string/atom usage...$(NC)"
+	@$(SCRYER) utils/validate_all.pl
+	@echo ""
+	@echo "$(GREEN)✅ Documentation validation passed!$(NC)"
 
 test-ci:
 	@echo "$(YELLOW)Testing CI workflow locally with Docker...$(NC)"
