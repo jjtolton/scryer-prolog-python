@@ -68,7 +68,7 @@ test_globals_locals_cleanup :-
 test_globals_locals_loop(0) :- !.
 test_globals_locals_loop(N) :-
     N > 0,
-    py_run_simple_string('x = a + b', [a-5, b-10], [], _G, _L),
+    py_run_simple_string("x = a + b", [a-5, b-10], [], _G, _L),
     N1 is N - 1,
     test_globals_locals_loop(N1).
 

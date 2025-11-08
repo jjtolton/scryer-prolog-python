@@ -9,7 +9,7 @@ test :-
     % Test 1: Run with custom globals
     write('Test 1: Run with custom globals...'), nl,
     write('  Running: x = a + b with a=5, b=10'), nl,
-    py_run_simple_string('x = a + b',
+    py_run_simple_string("x = a + b",
                          [a-5, b-10],
                          [],
                          Globals1,
@@ -20,7 +20,7 @@ test :-
     % Test 2: Multiple operations
     write('Test 2: Multiple operations...'), nl,
     write('  Running: y = x * 2 with x=10'), nl,
-    py_run_simple_string('y = x * 2',
+    py_run_simple_string("y = x * 2",
                          [x-10],
                          [],
                          Globals2,
@@ -31,7 +31,7 @@ test :-
     % Test 3: Computation
     write('Test 3: Computation...'), nl,
     write('  Running: result = 2 ** 10'), nl,
-    py_run_simple_string('result = 2 ** 10',
+    py_run_simple_string("result = 2 ** 10",
                          [],
                          [],
                          Globals3,
