@@ -46,8 +46,18 @@ main :-
     ),
     nl,
 
-    % 5. Check test coverage for string argument enforcement
-    write('Step 5: Checking test coverage for string argument enforcement...'), nl,
+    % 5. Validate GitHub Actions workflows
+    write('Step 5: Validating GitHub Actions workflows...'), nl,
+    validate_all_workflows(WorkflowErrors),
+    (   WorkflowErrors = []
+    ->  write('  ✓ All workflow examples use correct syntax'), nl
+    ;   write('  ✗ Found errors in workflows:'), nl,
+        maplist(print_docker_error, WorkflowErrors)
+    ),
+    nl,
+
+    % 6. Check test coverage for string argument enforcement
+    write('Step 6: Checking test coverage for string argument enforcement...'), nl,
     check_string_arg_coverage(CoverageReport),
     (   CoverageReport = complete
     ->  write('  ✓ All predicates with string arguments have type enforcement tests'), nl
@@ -56,14 +66,14 @@ main :-
     ),
     nl,
 
-    % 6. Validate config example file
-    write('Step 6: Validating python.pl.example...'), nl,
+    % 7. Validate config example file
+    write('Step 7: Validating python.pl.example...'), nl,
     validate_config("python.pl.example"),
     nl,
 
-    % 7. Summary
+    % 8. Summary
     write('=== Validation Summary ==='), nl,
-    (   DocErrors = [], ReadmeErrors = [], DockerfileErrors = [], CoverageReport = complete
+    (   DocErrors = [], ReadmeErrors = [], DockerfileErrors = [], WorkflowErrors = [], CoverageReport = complete
     ->  write('✓ All validation checks passed!'), nl,
         halt(0)
     ;   write('✗ Some validation checks failed'), nl,
@@ -182,3 +192,66 @@ add_filename_to_errors(File, [error(Line, Pred, Err)|Rest], [docker_error(File, 
 print_docker_error(docker_error(File, Line, Predicate, Error)) :-
     write('    '), write(File), write(':'), write(Line), write(' - '),
     write(Predicate), write(' - '), write(Error), nl.
+
+%% validate_all_workflows(-AllErrors)
+%
+% Find and validate all GitHub Actions workflow files.
+%
+validate_all_workflows(AllErrors) :-
+    findall(File, workflow_path(File), Workflows),
+    validate_workflows(Workflows, AllErrors).
+
+workflow_path(".github/workflows/test.yml").
+workflow_path(".github/workflows/test-macos-arm64.yml").
+workflow_path(".github/workflows/test-documentation.yml").
+
+validate_workflows([], []).
+validate_workflows([File|Rest], AllErrors) :-
+    validate_workflow(File, FileErrors),
+    validate_workflows(Rest, RestErrors),
+    append(FileErrors, RestErrors, AllErrors).
+
+validate_workflow(WorkflowFile, Errors) :-
+    open(WorkflowFile, read, Stream),
+    collect_workflow_lines(Stream, Lines),
+    close(Stream),
+    extract_prolog_from_workflow(Lines, PrologLines),
+    extract_code_examples(PrologLines, Examples),
+    maplist(validate_string_arguments, Examples, ErrorLists),
+    flatten_list(ErrorLists, FileErrors),
+    add_filename_to_errors(WorkflowFile, FileErrors, Errors).
+
+collect_workflow_lines(Stream, Lines) :-
+    get_line_to_chars(Stream, FirstLine, []),
+    (   FirstLine = []
+    ->  Lines = []
+    ;   collect_workflow_lines(Stream, RestLines),
+        Lines = [FirstLine|RestLines]
+    ).
+
+%% extract_prolog_from_workflow(+WorkflowLines, -PrologLines)
+%
+% Extract Prolog code from workflow run: blocks.
+% Looks for scryer-prolog command invocations.
+%
+extract_prolog_from_workflow(Lines, PrologLines) :-
+    extract_scryer_commands(Lines, PrologLines).
+
+extract_scryer_commands([], []).
+extract_scryer_commands([Line|Rest], PrologLines) :-
+    (   is_scryer_command(Line, PrologLine)
+    ->  extract_scryer_commands(Rest, RestProlog),
+        PrologLines = [PrologLine|RestProlog]
+    ;   extract_scryer_commands(Rest, PrologLines)
+    ).
+
+%% is_scryer_command(+Line, -PrologLine)
+%
+% Check if line contains a scryer-prolog command and extract the argument.
+% Example: "        scryer-prolog examples/test.pl" -> "examples/test.pl"
+%
+is_scryer_command(Line, PrologLine) :-
+    append(_, Suffix, Line),
+    append("scryer-prolog ", PrologLine, Suffix),
+    !.
+is_scryer_command(_, _) :- fail.

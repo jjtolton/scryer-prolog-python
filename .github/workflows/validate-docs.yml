@@ -1,0 +1,55 @@
+name: Validate Documentation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate String/Atom Usage in Documentation
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Python development libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3.10-dev libpython3.10
+
+      - name: Install Scryer Prolog (with RTLD_GLOBAL support)
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source $HOME/.cargo/env
+          git clone https://github.com/jjtolton/scryer-prolog.git /tmp/scryer-prolog
+          cd /tmp/scryer-prolog
+          git checkout rtld-global-support
+          cargo build --release
+          sudo cp target/release/scryer-prolog /usr/local/bin/
+          scryer-prolog -v
+
+      - name: Verify Python library
+        run: |
+          ls -la /usr/lib/x86_64-linux-gnu/libpython3.10.so*
+          python3.10 --version
+
+      - name: Run documentation validation
+        run: |
+          cd $GITHUB_WORKSPACE
+          make validate-docs
+
+      - name: Report results
+        if: always()
+        run: |
+          echo "Documentation validation completed"
+          echo "This validates:"
+          echo "  - Inline documentation in src/lib/python.pl"
+          echo "  - README.md code examples"
+          echo "  - Dockerfile embedded Prolog code"
+          echo "  - GitHub Actions workflow files"
+          echo "  - Test coverage for string argument enforcement"
+          echo "  - python.pl.example configuration syntax"
