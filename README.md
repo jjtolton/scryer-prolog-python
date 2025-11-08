@@ -202,8 +202,8 @@ Execute Python code from a string. The code is executed in the `__main__` module
 
 **Example**:
 ```prolog
-?- py_run_simple_string('x = 10').
-?- py_run_simple_string('print(x * 2)').
+?- py_run_simple_string("x = 10").
+?- py_run_simple_string("print(x * 2)").
 20
 ```
 
@@ -220,7 +220,7 @@ Execute Python code with explicit globals and locals dictionaries. This allows y
 
 **Example**:
 ```prolog
-?- py_run_simple_string('result = x + y', [x-10, y-20], [], Globals, _).
+?- py_run_simple_string("result = x + y", [x-10, y-20], [], Globals, _).
 Globals = [x-10, y-20, __builtins__-true, result-30].
 ```
 
