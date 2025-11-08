@@ -243,6 +243,68 @@ with_new_pyobject(CreateGoal, PyObject, UseGoal) :-
         py_xdecref(PyObject)
     ).
 
+%% validate_user_config
+%
+% Validate user configuration file (python.pl) if it exists.
+% Checks that path predicates use strings (double quotes) not atoms (single quotes).
+%
+% @private
+% @throws type_error if configuration uses atoms instead of strings
+%
+validate_user_config :-
+    % Check if user has a python.pl config file
+    (   \+ exists_file("python.pl")
+    ->  true  % No config file, validation passes
+    ;   % Config file exists - validate it
+        validate_config_terms
+    ).
+
+%% validate_config_terms
+%
+% Read and validate terms from python.pl config file.
+%
+% @private
+%
+validate_config_terms :-
+    open("python.pl", read, Stream),
+    check_all_config_terms(Stream),
+    close(Stream).
+
+check_all_config_terms(Stream) :-
+    read_term(Stream, Term, []),
+    (   Term = end_of_file
+    ->  true
+    ;   check_single_config_term(Term),
+        check_all_config_terms(Stream)
+    ).
+
+check_single_config_term(python_library_path_user(Path)) :- !,
+    (   atom(Path)
+    ->  throw(error(type_error(string, Path),
+            context(py_initialize/0,
+                'python_library_path_user/1: Path must be a string (double quotes "..."), not an atom (single quotes \'...\').\nExample: python_library_path_user("/usr/lib/libpython3.11.so").')))
+    ;   true
+    ).
+check_single_config_term(python_home(Path)) :- !,
+    (   atom(Path)
+    ->  throw(error(type_error(string, Path),
+            context(py_initialize/0,
+                'python_home/1: Path must be a string (double quotes "..."), not an atom (single quotes \'...\').\nExample: python_home("/usr").')))
+    ;   true
+    ).
+check_single_config_term(python_executable(Path)) :- !,
+    (   atom(Path)
+    ->  throw(error(type_error(string, Path),
+            context(py_initialize/0,
+                'python_executable/1: Path must be a string (double quotes "..."), not an atom (single quotes \'...\').\nExample: python_executable("/usr/bin/python3").')))
+    ;   true
+    ).
+check_single_config_term(_).  % Ignore other terms (comments, etc.)
+
+exists_file(Path) :-
+    catch(open(Path, read, Stream), _, fail),
+    close(Stream).
+
 %% py_initialize
 %
 % Initialize the Python interpreter.
@@ -254,7 +316,8 @@ with_new_pyobject(CreateGoal, PyObject, UseGoal) :-
 py_initialize :-
     (   is_python_initialized
     ->  throw(error(permission_error(create, python_interpreter, already_initialized), py_initialize/0))
-    ;   load_python_library_once,
+    ;   validate_user_config,
+        load_python_library_once,
         ffi:'Py_Initialize',
         mark_python_initialized,
         cache_python_none_singleton
@@ -287,7 +350,8 @@ py_initialize(Options) :-
     must_be(list, Options),
     (   is_python_initialized
     ->  throw(error(permission_error(create, python_interpreter, already_initialized), py_initialize/1))
-    ;   process_init_options(Options),
+    ;   validate_user_config,
+        process_init_options(Options),
         load_python_library_once,
         apply_python_home,
         ffi:'Py_Initialize',
