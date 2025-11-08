@@ -152,17 +152,30 @@ This implementation is inspired by:
 %% Abstraction allows easy switching of backend implementation.
 
 %% Internal state management predicates
+%% @private
 python_state_set(Key, Value) :- bb_put(Key, Value).
+
+%% @private
 python_state_get(Key, Value) :- bb_get(Key, Value).
+
+%% @private
 python_state_check(Key) :- bb_get(Key, true).
 
 %% Public state check predicates
+%% @private
 is_python_initialized :- python_state_check(python_initialized).
+
+%% @private
 is_library_loaded :- python_state_check(python_library_loaded).
 
 %% State mutation predicates
+%% @private
 mark_python_initialized :- python_state_set(python_initialized, true).
+
+%% @private
 mark_python_finalized :- python_state_set(python_initialized, false).
+
+%% @private
 mark_library_loaded :- python_state_set(python_library_loaded, true).
 
 %% ============================================
@@ -286,6 +299,7 @@ py_initialize(Options) :-
 %
 % Process initialization options and set state accordingly.
 %
+% @private
 process_init_options([]).
 process_init_options([shared_library_path(Path)|Rest]) :-
     python_state_set(python_library_path_override, Path),
@@ -420,6 +434,8 @@ python_library_path(Path) :-
 %
 % Generates candidate paths for Python shared libraries.
 % Order matters - tries newer versions first.
+%
+% @private
 %
 % Linux system Python
 candidate_python_library('/usr/lib/x86_64-linux-gnu/libpython3.12.so').
@@ -598,6 +614,7 @@ py_dict_to_list(DictPtr, List) :-
 %
 % Helper to iterate through dictionary keys and build Key-Value pairs.
 %
+% @private
 dict_keys_to_list(_DictPtr, _KeysObj, Index, Size, []) :-
     Index >= Size, !.
 dict_keys_to_list(DictPtr, KeysObj, Index, Size, [Key-Value|Rest]) :-
@@ -629,6 +646,7 @@ prolog_to_py_dict(PrologList, DictPtr) :-
     py_dict_new(DictPtr),
     fill_dict_from_list(DictPtr, PrologList).
 
+%% @private
 fill_dict_from_list(_DictPtr, []).
 fill_dict_from_list(DictPtr, [Key-Value|Rest]) :-
     py_dict_set(DictPtr, Key, Value),
@@ -716,6 +734,7 @@ pyobject_to_prolog_value(PyObject, Value) :-
 % Called automatically by py_initialize/0 and py_initialize/1.
 % INTERNAL PREDICATE - not exported.
 %
+% @private
 cache_python_none_singleton :-
     ffi:'PyImport_AddModule'("__main__", MainModule),
     ffi:'PyModule_GetDict'(MainModule, Globals),
@@ -895,6 +914,7 @@ py_list_from_prolog(PrologList, PyList) :-
 % Helper predicate to fill a Python list from a Prolog list.
 % Uses PyList_SetItem which STEALS references.
 %
+% @private
 fill_py_list(_, _, []).
 fill_py_list(PyList, Index, [Head|Tail]) :-
     % Check if Head is a list by attempting to unify with list pattern
@@ -932,6 +952,7 @@ py_list_to_prolog(PyList, PrologList) :-
 % Helper predicate to collect items from a Python list.
 % PyList_GetItem returns BORROWED references, so no decref needed.
 %
+% @private
 collect_list_items(_, Index, Size, []) :-
     Index >= Size, !.
 collect_list_items(PyList, Index, Size, [Head|Tail]) :-
@@ -1037,6 +1058,7 @@ py_tuple_from_prolog(PrologList, PyTuple) :-
 % Uses PyTuple_SetItem which STEALS references.
 % This is only valid for newly created tuples (before they're exposed).
 %
+% @private
 fill_py_tuple(_, _, []).
 fill_py_tuple(PyTuple, Index, [Head|Tail]) :-
     % Check if Head is a list by attempting to unify with list pattern
@@ -1074,6 +1096,7 @@ py_tuple_to_prolog(PyTuple, PrologList) :-
 % Helper predicate to collect items from a Python tuple.
 % PyTuple_GetItem returns BORROWED references, so no decref needed.
 %
+% @private
 collect_tuple_items(_, Index, Size, []) :-
     Index >= Size, !.
 collect_tuple_items(PyTuple, Index, Size, [Head|Tail]) :-

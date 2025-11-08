@@ -2,6 +2,43 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## CRITICAL: String vs Atom Distinction
+
+**IN PROLOG, STRINGS ARE DOUBLE QUOTED ALWAYS.**
+
+DO NOT CONFUSE THIS WITH PYTHON STRINGS, WHICH CAN BE SINGLE QUOTED.
+SINGLE QUOTES MEAN **ATOM** IN PROLOG.
+
+This is ESPECIALLY important for predicates like `py_run_simple_string` which must receive
+***PROLOG STRINGS (double quotes)*** NOT PYTHON STRINGS!
+
+### Examples
+
+```prolog
+% CORRECT: Prolog string (double quotes) containing Python code
+?- py_run_simple_string("print('hello')").
+true.
+
+% WRONG: Prolog atom (single quotes) - will throw type_error
+?- py_run_simple_string('print("hello")').
+ERROR: type_error(string, 'print("hello")')
+
+% CORRECT: Python code with Python strings (single quotes inside Prolog string)
+?- py_run_simple_string("x = 'Hello, World!'").
+true.
+
+% CORRECT: Python code with Python strings (double quotes escaped or using single quotes)
+?- py_run_simple_string("y = \"Hello\"").
+true.
+```
+
+### Key Takeaways
+
+- **Prolog strings**: Double quotes `"..."` → char lists (used for Python code)
+- **Prolog atoms**: Single quotes `'...'` → atomic terms (used for Prolog identifiers, dict keys, etc.)
+- **Python strings inside Prolog strings**: Use Python's single quotes or escape double quotes
+- **Function names like `py_run_simple_string`**: The word "string" refers to PROLOG strings, not Python strings!
+
 ## Commit Attribution Policy
 
 **NEVER include Claude attribution in commits.** Do not add:
